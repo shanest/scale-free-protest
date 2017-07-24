@@ -84,6 +84,23 @@ def activate_nodes(graph, nodes, record_to=None):
         record_to |= set(nodes)
 
 def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
+    """Runs a trial of an experiment.  This method implements the basic logic of
+    the spread of protest through a network, based on the number of an agent's
+    neighbors who are already protesting.
+
+    Args:
+        num_nodes: the number of nodes in the graph to be built
+        scaling_parameter: scale parameter for the power law that the graph will obey
+        threshold: how many neighbors need to be protesting for an agent to begin protesting
+        repression_rate: rate of node removal at each time step
+
+    Returns:
+        initial size: number of initially activated nodes
+        initial density: density of initially activated subgraph
+        initial clustering: average clustering coefficient of initially activated subgraph
+        final size: number of protesting nodes at stop time
+        num iters: how many iterations it took before stop condition was reached
+    """
     graph = scale_free_graph(num_nodes, scaling_parameter)
     graph = populate_graph(graph, threshold)
 
@@ -128,7 +145,17 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
 
 def run_experiment(out_file, scales, repression_rates,
         num_nodes=40000, threshold=2, trials_per_setting=2500):
+    """Runs an experiment.  Handles the main loops for running individual trials, as well
+    as the recording of data to a file. Returns nothing, but writes to out_file.
 
+    Args:
+        out_file: file to write to
+        scales: an iterable of possible scaling parameters
+        repression_rates: an iterable of possible repression rates
+        num_nodes: how many nodes to put in each graph
+        threshold: the threshold to use for ProtestAgents
+        trials_per_setting: how many trials to run per (scale X repression_rate) setting
+    """
     data = []
     for gamma in scales:
         for repression_rate in repression_rates:
@@ -136,19 +163,34 @@ def run_experiment(out_file, scales, repression_rates,
             for _ in xrange(trials_per_setting):
                 data.append(parameters + run_trial(num_nodes, gamma, threshold, repression_rate))
 
-    head_line = ('num_nodes,gamma,threshold,repression_rate,initial_size,initial_density,' + 
+    head_line = ('num_nodes,gamma,threshold,repression_rate,initial_size,initial_density,' +
             'initial_clustering,final_size,num_iters')
     np.savetxt(out_file, data, delimiter=',', header=head_line, comments='')
 
 def experiment_one(out_file='/tmp/exp1.csv'):
+    """Runs experiment one, where no parameters vary.
+
+    Args:
+        out_file: file to write data to
+    """
     #TODO: update to 2500
     run_experiment(out_file, [2.3], [0], trials_per_setting=2)
 
 def experiment_two(out_file='/tmp/exp2.csv'):
+    """Runs experiment two, where scale parameter varies.
+
+    Args:
+        out_file: file to write data to
+    """
     scale_params = np.linspace(1, 3, num=200)
     run_experiment(out_file, scale_params, [0])
 
 def experiment_three(out_file='/tmp/exp3.csv'):
+    """Runs experiment three, where scale parameter and repression rate vary.
+
+    Args:
+        out_file: file to write data to
+    """
     scale_params = np.linspace(1, 3, num=200)
     repression_rates = np.linspace(.1, 3, num=290)
     run_experiment(out_file, scale_params, repression_rates)
