@@ -129,6 +129,7 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
     initial_size = len(initial_neighborhood.nodes())
     initial_density = nx.density(initial_neighborhood)
     initial_clustering = nx.average_clustering(initial_neighborhood)
+    print (initial_size, initial_density, initial_clustering)
 
     # get ready
     num_iters = 0
@@ -153,6 +154,7 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
             num_iters += 1
             activate_nodes(graph, nodes_to_activate, active_nodes)
 
+    print len(active_nodes)
     return initial_size, initial_density, initial_clustering, len(active_nodes), num_iters
 
 def run_experiment(out_file, scales, repression_rates,
@@ -185,8 +187,7 @@ def experiment_one(out_file='/tmp/exp1.csv'):
     Args:
         out_file: file to write data to
     """
-    #TODO: update to 2500
-    run_experiment(out_file, [2.3], [0], trials_per_setting=2)
+    run_experiment(out_file, [2.3], [0])
 
 def experiment_two(out_file='/tmp/exp2.csv'):
     """Runs experiment two, where scale parameter varies.
