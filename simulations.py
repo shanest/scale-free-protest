@@ -1,20 +1,31 @@
 import numpy as np
 import networkx as nx
 
-# TODO: document the module, class, and experiment methods at end
+# TODO: document the module
 
 class ProtestAgent(object):
+    """A simple class, defining an agent who can be active/protesting or not. """
 
     def __init__(self, active=False, threshold=2):
-        self.active = active
+        """Build a new ProtestAgent.
+
+        Args:
+            active: boolean, whether the agent is initially protesting or not
+            threshold: int, how many neighbors need to be protesting before this agent protests
+        """
+        self._active = active
         self._threshold = threshold
 
     @property
     def threshold(self):
+        """int: the threshold -- number of neighbors that must be protesting -- before this
+        agent protests.
+        """
         return self._threshold
 
     @property
     def active(self):
+        """boolean: whether or not the agent is currently active/proesting. """
         return self._active
 
     @active.setter
@@ -22,6 +33,7 @@ class ProtestAgent(object):
         self._active = boolean
 
     def activate(self):
+        """Activate this agent.  Sets self.active to True. """
         self.active = True
 
 
