@@ -2,6 +2,7 @@ from multiprocessing import Pool
 
 import numpy as np
 import networkx as nx
+import tqdm
 
 # TODO: document the module
 
@@ -190,10 +191,14 @@ def run_experiment(out_file, scales, repression_rates,
         trials_per_setting: how many trials to run per (scale X repression_rate) setting
         num_procs: how many processes to spawn to run trials
     """
-    procs = Pool(num_procs)
     parameters = [(num_nodes, gamma, threshold, repression_rate) for gamma in scales
             for repression_rate in repression_rates for _ in xrange(trials_per_setting)]
-    data = procs.map(run_trial_from_tuple, parameters)
+    procs = Pool(num_procs)
+
+    # send work to pool, wrapped in a progress bar
+    data = list(tqdm.tqdm(procs.imap(run_trial_from_tuple, parameters), total=len(parameters)))
+
+    # write output
     head_line = ('num_nodes,gamma,threshold,repression_rate,initial_size,initial_density,' +
             'initial_clustering,final_size,num_iters')
     np.savetxt(out_file, data, delimiter=',', header=head_line, comments='')
