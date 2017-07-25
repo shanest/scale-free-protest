@@ -141,13 +141,19 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
     # MAIN LOOP
     # TODO: modify to incorporate repression for experiment 3
     while not stop:
+
+        nodes_to_visit = []
         nodes_to_activate = []
 
-        # TODO: optimize this loop; only nodes added in previous step?
         for node in active_nodes:
-            for neighbor in graph[node].keys():
-                if (number_active_neighbors(graph, neighbor) >= graph.node[neighbor].threshold
-                        and not graph.node[neighbor].active):
+            nodes_to_visit.extend(graph[node].keys())
+
+        # don't visit the same node twice
+        node_set = set(nodes_to_visit)
+
+        for neighbor in node_set:
+            if not graph.node[neighbor].active:
+                if number_active_neighbors(graph, neighbor) >= graph.node[neighbor].threshold:
                     nodes_to_activate.append(neighbor)
 
         if nodes_to_activate == []:
