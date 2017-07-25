@@ -1,3 +1,5 @@
+from multiprocessing import Pool
+
 import numpy as np
 import networkx as nx
 
@@ -49,6 +51,7 @@ def scale_free_graph(num_nodes, gamma):
         a networkx.Graph, which obeys a power-law with exponent gamma
     """
     scales = nx.utils.powerlaw_sequence(num_nodes, gamma)
+    #TODO: figure out ZeroDivisionError here, 1.4 seems OK, lower not...
     graph = nx.expected_degree_graph(scales, selfloops=False)
     return graph
 
@@ -77,6 +80,7 @@ def number_active_neighbors(graph, node):
     Returns:
         the number of ProtestAgent neighbors which are active
     """
+    # TODO: optimize this so that big loop is not required every time?, i.e. new data structure?
     return np.sum([graph.node[neighbor_idx].active for neighbor_idx in graph[node].keys()])
 
 def activate_nodes(graph, nodes, record_to=None):
@@ -129,7 +133,6 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
     initial_size = len(initial_neighborhood.nodes())
     initial_density = nx.density(initial_neighborhood)
     initial_clustering = nx.average_clustering(initial_neighborhood)
-    print (initial_size, initial_density, initial_clustering)
 
     # get ready
     num_iters = 0
@@ -139,7 +142,6 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
     # TODO: modify to incorporate repression for experiment 3
     while not stop:
         nodes_to_activate = []
-        print len(active_nodes)
 
         # TODO: optimize this loop; only nodes added in previous step?
         for node in active_nodes:
@@ -154,11 +156,22 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
             num_iters += 1
             activate_nodes(graph, nodes_to_activate, active_nodes)
 
-    print len(active_nodes)
+    print 'Final activation size: ' + str(len(active_nodes))
     return initial_size, initial_density, initial_clustering, len(active_nodes), num_iters
 
+def run_trial_from_tuple(tup):
+    """Wrapper for run_trial used for parallelizing run_experiment.
+
+    Args:
+        tup: a tuple, containing the arguments for run_trial, in order
+
+    Returns:
+        a tuple, first with tup, then with the results of run_trial(tup)
+    """
+    return tup + run_trial(*tup)
+
 def run_experiment(out_file, scales, repression_rates,
-        num_nodes=40000, threshold=2, trials_per_setting=2500):
+        num_nodes=40000, threshold=2, trials_per_setting=2500, num_procs=4):
     """Runs an experiment.  Handles the main loops for running individual trials, as well
     as the recording of data to a file. Returns nothing, but writes to out_file.
 
@@ -169,14 +182,12 @@ def run_experiment(out_file, scales, repression_rates,
         num_nodes: how many nodes to put in each graph
         threshold: the threshold to use for ProtestAgents
         trials_per_setting: how many trials to run per (scale X repression_rate) setting
+        num_procs: how many processes to spawn to run trials
     """
-    data = []
-    for gamma in scales:
-        for repression_rate in repression_rates:
-            parameters = (num_nodes, gamma, threshold, repression_rate)
-            for _ in xrange(trials_per_setting):
-                data.append(parameters + run_trial(num_nodes, gamma, threshold, repression_rate))
-
+    procs = Pool(num_procs)
+    parameters = [(num_nodes, gamma, threshold, repression_rate) for gamma in scales
+            for repression_rate in repression_rates for _ in xrange(trials_per_setting)]
+    data = procs.map(run_trial_from_tuple, parameters)
     head_line = ('num_nodes,gamma,threshold,repression_rate,initial_size,initial_density,' +
             'initial_clustering,final_size,num_iters')
     np.savetxt(out_file, data, delimiter=',', header=head_line, comments='')
@@ -207,5 +218,3 @@ def experiment_three(out_file='/tmp/exp3.csv'):
     scale_params = np.linspace(1, 3, num=200)
     repression_rates = np.linspace(.1, 3, num=290)
     run_experiment(out_file, scale_params, repression_rates)
-
-experiment_one()
