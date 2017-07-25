@@ -99,7 +99,7 @@ def activate_nodes(graph, nodes, record_to=None):
         # |= is union + assignment
         record_to |= set(nodes)
 
-def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
+def run_trial(num_nodes, scaling_parameter, threshold, repression_rate, trial):
     """Runs a trial of an experiment.  This method implements the basic logic of
     the spread of protest through a network, based on the number of an agent's
     neighbors who are already protesting.
@@ -140,6 +140,7 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
 
     # MAIN LOOP
     # TODO: modify to incorporate repression for experiment 3
+    #print(trial)
     while not stop:
         nodes_to_activate = []
 
@@ -151,6 +152,7 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
                     nodes_to_activate.append(neighbor)
 
         if nodes_to_activate == []:
+            print('For trial ', trial, ', initial size is ', initial_size)
             stop = True
         else:
             num_iters += 1
@@ -185,14 +187,14 @@ def run_experiment(out_file, scales, repression_rates,
         num_procs: how many processes to spawn to run trials
     """
     procs = Pool(num_procs)
-    parameters = [(num_nodes, gamma, threshold, repression_rate) for gamma in scales
-            for repression_rate in repression_rates for _ in xrange(trials_per_setting)]
+    parameters = [(num_nodes, gamma, threshold, repression_rate, trial) for gamma in scales
+            for repression_rate in repression_rates for trial in xrange(trials_per_setting)]
     data = procs.map(run_trial_from_tuple, parameters)
     head_line = ('num_nodes,gamma,threshold,repression_rate,initial_size,initial_density,' +
             'initial_clustering,final_size,num_iters')
     np.savetxt(out_file, data, delimiter=',', header=head_line, comments='')
 
-def experiment_one(out_file='/tmp/exp1.csv'):
+def experiment_one(out_file='/Downloads/exp1.csv'):
     """Runs experiment one, where no parameters vary.
 
     Args:
@@ -200,7 +202,7 @@ def experiment_one(out_file='/tmp/exp1.csv'):
     """
     run_experiment(out_file, [2.3], [0])
 
-def experiment_two(out_file='/tmp/exp2.csv'):
+def experiment_two(out_file='/Downloads/exp2.csv'):
     """Runs experiment two, where scale parameter varies.
 
     Args:
@@ -209,7 +211,7 @@ def experiment_two(out_file='/tmp/exp2.csv'):
     scale_params = np.linspace(1, 3, num=200)
     run_experiment(out_file, scale_params, [0])
 
-def experiment_three(out_file='/tmp/exp3.csv'):
+def experiment_three(out_file='/Downloads/exp3.csv'):
     """Runs experiment three, where scale parameter and repression rate vary.
 
     Args:
