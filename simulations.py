@@ -4,6 +4,8 @@ import numpy as np
 import networkx as nx
 
 # TODO: document the module
+# TODO: Network reduce to 10000?
+# TODO: Only look at giant connected component?
 
 class ProtestAgent(object):
     """A simple class, defining an agent who can be active/protesting or not. """
