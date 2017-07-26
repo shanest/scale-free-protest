@@ -2,6 +2,7 @@ from multiprocessing import Pool
 
 import numpy as np
 import networkx as nx
+import tqdm
 
 # TODO: document the module
 # TODO: Network reduce to 10000?
@@ -144,8 +145,11 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate, trial):
     # TODO: modify to incorporate repression for experiment 3
     #print(trial)
     while not stop:
+
+        nodes_to_visit = []
         nodes_to_activate = []
 
+<<<<<<< HEAD
         # Get set of neighbors that could be activated
         neighbors_set = []
         for node in active_nodes:
@@ -162,6 +166,18 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate, trial):
 #                 if (number_active_neighbors(graph, neighbor) >= graph.node[neighbor].threshold
 #                         and not graph.node[neighbor].active):
 #                     nodes_to_activate.append(neighbor)
+=======
+        for node in active_nodes:
+            nodes_to_visit.extend(graph[node].keys())
+
+        # don't visit the same node twice
+        node_set = set(nodes_to_visit)
+
+        for neighbor in node_set:
+            if not graph.node[neighbor].active:
+                if number_active_neighbors(graph, neighbor) >= graph.node[neighbor].threshold:
+                    nodes_to_activate.append(neighbor)
+>>>>>>> shanest/master
 
         if nodes_to_activate == []:
             #print('For trial ', trial, ', initial size is ', initial_size)
@@ -198,10 +214,21 @@ def run_experiment(out_file, scales, repression_rates,
         trials_per_setting: how many trials to run per (scale X repression_rate) setting
         num_procs: how many processes to spawn to run trials
     """
+<<<<<<< HEAD
     procs = Pool(num_procs)
     parameters = [(num_nodes, gamma, threshold, repression_rate, trial) for gamma in scales
             for repression_rate in repression_rates for trial in xrange(trials_per_setting)]
     data = procs.map(run_trial_from_tuple, parameters)
+=======
+    parameters = [(num_nodes, gamma, threshold, repression_rate) for gamma in scales
+            for repression_rate in repression_rates for _ in xrange(trials_per_setting)]
+    procs = Pool(num_procs)
+
+    # send work to pool, wrapped in a progress bar
+    data = list(tqdm.tqdm(procs.imap(run_trial_from_tuple, parameters), total=len(parameters)))
+
+    # write output
+>>>>>>> shanest/master
     head_line = ('num_nodes,gamma,threshold,repression_rate,initial_size,initial_density,' +
             'initial_clustering,final_size,num_iters')
     np.savetxt(out_file, data, delimiter=',', header=head_line, comments='')
