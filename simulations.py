@@ -149,12 +149,12 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate, trial):
         for node in active_nodes:
             neighbors_set.extend(graph[node].keys())
         neighbors_set = set(neighbors_set)
-        
+
         for neighbor in neighbors_set:
             if (number_active_neighbors(graph, neighbor) >= graph.node[neighbor].threshold and not graph.node[neighbor].active):
                 nodes_to_activate.append(neighbor)
-                
-        # TODO: optimize this loop; only nodes added in previous step?          
+
+        # TODO: optimize this loop; only nodes added in previous step?
 #         for node in active_nodes:
 #             for neighbor in graph[node].keys():
 #                 if (number_active_neighbors(graph, neighbor) >= graph.node[neighbor].threshold
@@ -168,7 +168,7 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate, trial):
             num_iters += 1
             activate_nodes(graph, nodes_to_activate, active_nodes)
 
-    print 'Final activation size: ' + str(len(active_nodes)) + ', ' + str(trial)
+    print 'Final activation size: ' + str(len(active_nodes)) + ', ' + str(trial) + ', Initial neighborhood size: ', str(initial_size) + ', Scale parameter is:' + str(scaling_parameter)
     return initial_size, initial_density, initial_clustering, len(active_nodes), num_iters
 
 def run_trial_from_tuple(tup):
