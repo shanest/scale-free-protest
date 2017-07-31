@@ -6,6 +6,7 @@ import tqdm
 
 # TODO: document the module
 
+
 class ProtestAgent(object):
     """A simple class, defining an agent who can be active/protesting or not. """
 
@@ -40,7 +41,6 @@ class ProtestAgent(object):
         self.active = True
 
 
-# https://stackoverflow.com/questions/28920824/generate-a-scale-free-network-with-a-power-law-degree-distributions
 def scale_free_graph(num_nodes, gamma):
     """Generates a scale free graph of a certain size with a certain scale parameter.
 
@@ -55,6 +55,7 @@ def scale_free_graph(num_nodes, gamma):
     #TODO: figure out ZeroDivisionError here, 1.4 seems OK, lower not...
     graph = nx.expected_degree_graph(scales, selfloops=False)
     return graph
+
 
 def populate_graph(graph, threshold):
     """Populates a given graph with ProtestAgents.
@@ -71,6 +72,7 @@ def populate_graph(graph, threshold):
     #nx.set_node_attributes(graph, 'agent', agents_for_graph)
     return graph
 
+
 def number_active_neighbors(graph, node):
     """Gets the number of active neighbors of a node in a graph.
 
@@ -83,6 +85,7 @@ def number_active_neighbors(graph, node):
     """
     # TODO: optimize this so that big loop is not required every time?, i.e. new data structure?
     return np.sum([graph.node[neighbor_idx].active for neighbor_idx in graph[node].keys()])
+
 
 def activate_nodes(graph, nodes, record_to=None):
     """Activate a given group of nodes in a graph.
@@ -99,6 +102,7 @@ def activate_nodes(graph, nodes, record_to=None):
     if record_to is not None:
         # |= is union + assignment
         record_to |= set(nodes)
+
 
 def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
     """Runs a trial of an experiment.  This method implements the basic logic of
@@ -166,6 +170,7 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
     print 'Final activation size: ' + str(len(active_nodes))
     return initial_size, initial_density, initial_clustering, len(active_nodes), num_iters
 
+
 def run_trial_from_tuple(tup):
     """Wrapper for run_trial used for parallelizing run_experiment.
 
@@ -177,8 +182,9 @@ def run_trial_from_tuple(tup):
     """
     return tup + run_trial(*tup)
 
+
 def run_experiment(out_file, scales, repression_rates,
-        num_nodes=40000, threshold=2, trials_per_setting=2500, num_procs=4):
+        num_nodes=[40000], threshold=2, trials_per_setting=2500, num_procs=4):
     """Runs an experiment.  Handles the main loops for running individual trials, as well
     as the recording of data to a file. Returns nothing, but writes to out_file.
 
@@ -191,7 +197,7 @@ def run_experiment(out_file, scales, repression_rates,
         trials_per_setting: how many trials to run per (scale X repression_rate) setting
         num_procs: how many processes to spawn to run trials
     """
-    parameters = [(num_nodes, gamma, threshold, repression_rate) for gamma in scales
+    parameters = [(num, gamma, threshold, repression_rate) for num in num_nodes for gamma in scales
             for repression_rate in repression_rates for _ in xrange(trials_per_setting)]
     procs = Pool(num_procs)
 
@@ -203,6 +209,7 @@ def run_experiment(out_file, scales, repression_rates,
             'initial_clustering,final_size,num_iters')
     np.savetxt(out_file, data, delimiter=',', header=head_line, comments='')
 
+
 def experiment_one(out_file='/tmp/exp1.csv'):
     """Runs experiment one, where no parameters vary.
 
@@ -210,6 +217,7 @@ def experiment_one(out_file='/tmp/exp1.csv'):
         out_file: file to write data to
     """
     run_experiment(out_file, [2.3], [0])
+
 
 def experiment_two(out_file='/tmp/exp2.csv'):
     """Runs experiment two, where scale parameter varies.
@@ -220,6 +228,7 @@ def experiment_two(out_file='/tmp/exp2.csv'):
     scale_params = np.linspace(1, 3, num=200)
     run_experiment(out_file, scale_params, [0])
 
+
 def experiment_three(out_file='/tmp/exp3.csv'):
     """Runs experiment three, where scale parameter and repression rate vary.
 
@@ -229,3 +238,13 @@ def experiment_three(out_file='/tmp/exp3.csv'):
     scale_params = np.linspace(1, 3, num=200)
     repression_rates = np.linspace(.1, 3, num=290)
     run_experiment(out_file, scale_params, repression_rates)
+
+
+def experiment_four(out_file='/tmp/exp4.csv'):
+    """Runs experiment four, where number of nodes varies.
+
+    Args:
+        out_file: file to write data to
+    """
+    size_params = np.linspace(1000, 40000, num=40, dtype=int)
+    run_experiment(out_file, [2.3], [0], num_nodes=size_params)
