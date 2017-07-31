@@ -5,6 +5,9 @@ import networkx as nx
 import tqdm
 
 # TODO: document the module
+# TODO: Network reduce to 10000?
+# TODO: Only look at giant connected component?
+
 
 
 class ProtestAgent(object):
@@ -107,7 +110,7 @@ def activate_nodes(graph, nodes, record_to=None):
         # |= is union + assignment
         record_to |= set(nodes)
 
-
+        
 def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
     """Runs a trial of an experiment.  This method implements the basic logic of
     the spread of protest through a network, based on the number of an agent's
@@ -152,6 +155,7 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
 
     # MAIN LOOP
     # TODO: modify to incorporate repression for experiment 3
+    #print(trial)
     while not stop:
 
         nodes_to_visit = []
@@ -170,6 +174,7 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
                     nodes_to_activate.append(neighbor)
 
         if nodes_to_activate == []:
+            #print('For trial ', trial, ', initial size is ', initial_size)
             stop = True
         else:
             num_iters += 1
@@ -178,7 +183,7 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
     print 'Final activation size: ' + str(len(active_nodes))
     return (initial_size, initial_density, initial_clustering,
             len(active_nodes), num_iters)
-
+  
 
 def run_trial_from_tuple(tup):
     """Wrapper for run_trial used for parallelizing run_experiment.
@@ -223,7 +228,7 @@ def run_experiment(out_file, scales, repression_rates,
             'initial_density,initial_clustering,final_size,num_iters')
     np.savetxt(out_file, data, delimiter=',', header=head_line, comments='')
 
-
+    
 def experiment_one(out_file='/tmp/exp1.csv'):
     """Runs experiment one, where no parameters vary.
 
@@ -231,7 +236,7 @@ def experiment_one(out_file='/tmp/exp1.csv'):
         out_file: file to write data to
     """
     run_experiment(out_file, [2.3], [0])
-
+    
 
 def experiment_two(out_file='/tmp/exp2.csv'):
     """Runs experiment two, where scale parameter varies.
@@ -242,7 +247,7 @@ def experiment_two(out_file='/tmp/exp2.csv'):
     scale_params = np.linspace(1, 3, num=200)
     run_experiment(out_file, scale_params, [0])
 
-
+    
 def experiment_three(out_file='/tmp/exp3.csv'):
     """Runs experiment three, where scale parameter and repression rate vary.
 
