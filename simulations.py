@@ -9,6 +9,7 @@ import tqdm
 # TODO: Only look at giant connected component?
 
 
+
 class ProtestAgent(object):
     """A simple class, defining an agent who can be active/protesting or not.
     """
@@ -109,12 +110,8 @@ def activate_nodes(graph, nodes, record_to=None):
         # |= is union + assignment
         record_to |= set(nodes)
 
-<<<<<<< HEAD
-def run_trial(num_nodes, scaling_parameter, threshold, repression_rate, trial):
-=======
-
+        
 def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
->>>>>>> shanest/master
     """Runs a trial of an experiment.  This method implements the basic logic of
     the spread of protest through a network, based on the number of an agent's
     neighbors who are already protesting.
@@ -164,27 +161,6 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
         nodes_to_visit = []
         nodes_to_activate = []
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-        # Get set of neighbors that could be activated
-        neighbors_set = []
-        for node in active_nodes:
-            neighbors_set.extend(graph[node].keys())
-        neighbors_set = set(neighbors_set)
-
-        for neighbor in neighbors_set:
-            if (number_active_neighbors(graph, neighbor) >= graph.node[neighbor].threshold and not graph.node[neighbor].active):
-                nodes_to_activate.append(neighbor)
-
-        # TODO: optimize this loop; only nodes added in previous step?
-#         for node in active_nodes:
-#             for neighbor in graph[node].keys():
-#                 if (number_active_neighbors(graph, neighbor) >= graph.node[neighbor].threshold
-#                         and not graph.node[neighbor].active):
-#                     nodes_to_activate.append(neighbor)
-=======
-=======
->>>>>>> shanest/master
         for node in active_nodes:
             nodes_to_visit.extend(graph[node].keys())
 
@@ -193,14 +169,9 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
 
         for neighbor in node_set:
             if not graph.node[neighbor].active:
-<<<<<<< HEAD
-                if number_active_neighbors(graph, neighbor) >= graph.node[neighbor].threshold:
-=======
                 if (number_active_neighbors(graph, neighbor)
                         >= graph.node[neighbor].threshold):
->>>>>>> shanest/master
                     nodes_to_activate.append(neighbor)
->>>>>>> shanest/master
 
         if nodes_to_activate == []:
             #print('For trial ', trial, ', initial size is ', initial_size)
@@ -209,15 +180,10 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
             num_iters += 1
             activate_nodes(graph, nodes_to_activate, active_nodes)
 
-<<<<<<< HEAD
-    print 'Final activation size: ' + str(len(active_nodes)) + ', ' + str(trial) + ', Initial neighborhood size: ', str(initial_size) + ', Scale parameter is:' + str(scaling_parameter)
-    return initial_size, initial_density, initial_clustering, len(active_nodes), num_iters
-=======
     print 'Final activation size: ' + str(len(active_nodes))
     return (initial_size, initial_density, initial_clustering,
             len(active_nodes), num_iters)
-
->>>>>>> shanest/master
+  
 
 def run_trial_from_tuple(tup):
     """Wrapper for run_trial used for parallelizing run_experiment.
@@ -247,28 +213,6 @@ def run_experiment(out_file, scales, repression_rates,
                             (scale X repression_rate) setting
         num_procs: how many processes to spawn to run trials
     """
-<<<<<<< HEAD
-<<<<<<< HEAD
-    procs = Pool(num_procs)
-    parameters = [(num_nodes, gamma, threshold, repression_rate, trial) for gamma in scales
-            for repression_rate in repression_rates for trial in xrange(trials_per_setting)]
-    data = procs.map(run_trial_from_tuple, parameters)
-=======
-    parameters = [(num_nodes, gamma, threshold, repression_rate) for gamma in scales
-            for repression_rate in repression_rates for _ in xrange(trials_per_setting)]
-    procs = Pool(num_procs)
-
-    # send work to pool, wrapped in a progress bar
-    data = list(tqdm.tqdm(procs.imap(run_trial_from_tuple, parameters), total=len(parameters)))
-
-    # write output
->>>>>>> shanest/master
-    head_line = ('num_nodes,gamma,threshold,repression_rate,initial_size,initial_density,' +
-            'initial_clustering,final_size,num_iters')
-    np.savetxt(out_file, data, delimiter=',', header=head_line, comments='')
-
-def experiment_one(out_file='/Downloads/exp1.csv'):
-=======
     parameters = [(num, gamma, threshold, repression_rate)
             for num in num_nodes for gamma in scales
             for repression_rate in repression_rates
@@ -284,22 +228,17 @@ def experiment_one(out_file='/Downloads/exp1.csv'):
             'initial_density,initial_clustering,final_size,num_iters')
     np.savetxt(out_file, data, delimiter=',', header=head_line, comments='')
 
-
+    
 def experiment_one(out_file='/tmp/exp1.csv'):
->>>>>>> shanest/master
     """Runs experiment one, where no parameters vary.
 
     Args:
         out_file: file to write data to
     """
     run_experiment(out_file, [2.3], [0])
-
-<<<<<<< HEAD
-def experiment_two(out_file='/Downloads/exp2.csv'):
-=======
+    
 
 def experiment_two(out_file='/tmp/exp2.csv'):
->>>>>>> shanest/master
     """Runs experiment two, where scale parameter varies.
 
     Args:
@@ -308,12 +247,8 @@ def experiment_two(out_file='/tmp/exp2.csv'):
     scale_params = np.linspace(1, 3, num=200)
     run_experiment(out_file, scale_params, [0])
 
-<<<<<<< HEAD
-def experiment_three(out_file='/Downloads/exp3.csv'):
-=======
-
+    
 def experiment_three(out_file='/tmp/exp3.csv'):
->>>>>>> shanest/master
     """Runs experiment three, where scale parameter and repression rate vary.
 
     Args:
