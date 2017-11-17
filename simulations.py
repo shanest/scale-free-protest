@@ -8,23 +8,27 @@ import tqdm
 # TODO: Network reduce to 10000?
 # TODO: Only look at giant connected component?
 
+
+
 class ProtestAgent(object):
-    """A simple class, defining an agent who can be active/protesting or not. """
+    """A simple class, defining an agent who can be active/protesting or not.
+    """
 
     def __init__(self, active=False, threshold=2):
         """Build a new ProtestAgent.
 
         Args:
             active: boolean, whether the agent is initially protesting or not
-            threshold: int, how many neighbors need to be protesting before this agent protests
+            threshold: int, how many neighbors need to be protesting before
+                        this agent protests
         """
         self._active = active
         self._threshold = threshold
 
     @property
     def threshold(self):
-        """int: the threshold -- number of neighbors that must be protesting -- before this
-        agent protests.
+        """int: the threshold -- number of neighbors that must be protesting --
+        before this agent protests.
         """
         return self._threshold
 
@@ -42,9 +46,9 @@ class ProtestAgent(object):
         self.active = True
 
 
-# https://stackoverflow.com/questions/28920824/generate-a-scale-free-network-with-a-power-law-degree-distributions
 def scale_free_graph(num_nodes, gamma):
-    """Generates a scale free graph of a certain size with a certain scale parameter.
+    """Generates a scale free graph of a certain size with a certain
+    scale parameter.
 
     Args:
         num_nodes: size of the graph
@@ -53,10 +57,17 @@ def scale_free_graph(num_nodes, gamma):
     Returns:
         a networkx.Graph, which obeys a power-law with exponent gamma
     """
-    scales = nx.utils.powerlaw_sequence(num_nodes, gamma)
-    #TODO: figure out ZeroDivisionError here, 1.4 seems OK, lower not...
-    graph = nx.expected_degree_graph(scales, selfloops=False)
-    return graph
+    scales = nx.utils.create_degree_sequence(num_nodes,
+            nx.utils.powerlaw_sequence, exponent=gamma)
+    # TODO: figure out ZeroDivisionError here, 1.4 seems OK, lower not...
+    # graph = nx.expected_degree_graph(scales, selfloops=False)
+    graph = nx.configuration_model(scales)
+    loops = graph.selfloop_edges()
+    graph = nx.Graph(graph)
+    graph.remove_edges_from(loops)
+    components = sorted(nx.connected_components(graph), key=len, reverse=True)
+    return graph.subgraph(components[0])
+
 
 def populate_graph(graph, threshold):
     """Populates a given graph with ProtestAgents.
@@ -69,9 +80,11 @@ def populate_graph(graph, threshold):
         a new graph, with graph.node now containing ProtestAgents
     """
     num_nodes = len(graph.nodes())
-    graph.node = {i: ProtestAgent(threshold=threshold) for i in xrange(num_nodes)}
-    #nx.set_node_attributes(graph, 'agent', agents_for_graph)
+    graph.node = {i: ProtestAgent(threshold=threshold)
+            for i in xrange(num_nodes)}
+    # nx.set_node_attributes(graph, 'agent', agents_for_graph)
     return graph
+
 
 def number_active_neighbors(graph, node):
     """Gets the number of active neighbors of a node in a graph.
@@ -83,8 +96,9 @@ def number_active_neighbors(graph, node):
     Returns:
         the number of ProtestAgent neighbors which are active
     """
-    # TODO: optimize this so that big loop is not required every time?, i.e. new data structure?
-    return np.sum([graph.node[neighbor_idx].active for neighbor_idx in graph[node].keys()])
+    return np.sum([graph.node[neighbor_idx].active
+        for neighbor_idx in graph[node].keys()])
+
 
 def activate_nodes(graph, nodes, record_to=None):
     """Activate a given group of nodes in a graph.
@@ -109,16 +123,19 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate, trial):
 
     Args:
         num_nodes: the number of nodes in the graph to be built
-        scaling_parameter: scale parameter for the power law that the graph will obey
-        threshold: how many neighbors need to be protesting for an agent to begin protesting
+        scaling_parameter: scale parameter for the power law
+                            that the graph will obey
+        threshold: how many neighbors need to be protesting for an agent
+                    to begin protesting
         repression_rate: rate of node removal at each time step
 
     Returns:
         initial size: number of initially activated nodes
         initial density: density of initially activated subgraph
-        initial clustering: average clustering coefficient of initially activated subgraph
+        initial clustering: average clustering coefficient of
+                            initially activated subgraph
         final size: number of protesting nodes at stop time
-        num iters: how many iterations it took before stop condition was reached
+        num_iters: how many iterations it took before stopping
     """
     graph = scale_free_graph(num_nodes, scaling_parameter)
     graph = populate_graph(graph, threshold)
@@ -149,7 +166,6 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate, trial):
         nodes_to_visit = []
         nodes_to_activate = []
 
-<<<<<<< HEAD
         # Get set of neighbors that could be activated
         neighbors_set = []
         for node in active_nodes:
@@ -160,25 +176,6 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate, trial):
             if (number_active_neighbors(graph, neighbor) >= graph.node[neighbor].threshold and not graph.node[neighbor].active):
                 nodes_to_activate.append(neighbor)
 
-        # TODO: optimize this loop; only nodes added in previous step?
-#         for node in active_nodes:
-#             for neighbor in graph[node].keys():
-#                 if (number_active_neighbors(graph, neighbor) >= graph.node[neighbor].threshold
-#                         and not graph.node[neighbor].active):
-#                     nodes_to_activate.append(neighbor)
-=======
-        for node in active_nodes:
-            nodes_to_visit.extend(graph[node].keys())
-
-        # don't visit the same node twice
-        node_set = set(nodes_to_visit)
-
-        for neighbor in node_set:
-            if not graph.node[neighbor].active:
-                if number_active_neighbors(graph, neighbor) >= graph.node[neighbor].threshold:
-                    nodes_to_activate.append(neighbor)
->>>>>>> shanest/master
-
         if nodes_to_activate == []:
             #print('For trial ', trial, ', initial size is ', initial_size)
             stop = True
@@ -188,6 +185,7 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate, trial):
 
     print 'Final activation size: ' + str(len(active_nodes)) + ', ' + str(trial) + ', Initial neighborhood size: ', str(initial_size) + ', Scale parameter is:' + str(scaling_parameter)
     return initial_size, initial_density, initial_clustering, len(active_nodes), num_iters
+
 
 def run_trial_from_tuple(tup):
     """Wrapper for run_trial used for parallelizing run_experiment.
@@ -200,10 +198,12 @@ def run_trial_from_tuple(tup):
     """
     return tup + run_trial(*tup)
 
+
 def run_experiment(out_file, scales, repression_rates,
-        num_nodes=40000, threshold=2, trials_per_setting=2500, num_procs=4):
-    """Runs an experiment.  Handles the main loops for running individual trials, as well
-    as the recording of data to a file. Returns nothing, but writes to out_file.
+        num_nodes=[40000], threshold=2, trials_per_setting=2500, num_procs=4):
+    """Runs an experiment.  Handles the main loops for running individual
+    trials, as well as the recording of data to a file. Returns nothing,
+    but writes to out_file.
 
     Args:
         out_file: file to write to
@@ -211,15 +211,10 @@ def run_experiment(out_file, scales, repression_rates,
         repression_rates: an iterable of possible repression rates
         num_nodes: how many nodes to put in each graph
         threshold: the threshold to use for ProtestAgents
-        trials_per_setting: how many trials to run per (scale X repression_rate) setting
+        trials_per_setting: how many trials to run per
+                            (scale X repression_rate) setting
         num_procs: how many processes to spawn to run trials
     """
-<<<<<<< HEAD
-    procs = Pool(num_procs)
-    parameters = [(num_nodes, gamma, threshold, repression_rate, trial) for gamma in scales
-            for repression_rate in repression_rates for trial in xrange(trials_per_setting)]
-    data = procs.map(run_trial_from_tuple, parameters)
-=======
     parameters = [(num_nodes, gamma, threshold, repression_rate) for gamma in scales
             for repression_rate in repression_rates for _ in xrange(trials_per_setting)]
     procs = Pool(num_procs)
@@ -228,12 +223,11 @@ def run_experiment(out_file, scales, repression_rates,
     data = list(tqdm.tqdm(procs.imap(run_trial_from_tuple, parameters), total=len(parameters)))
 
     # write output
->>>>>>> shanest/master
     head_line = ('num_nodes,gamma,threshold,repression_rate,initial_size,initial_density,' +
             'initial_clustering,final_size,num_iters')
     np.savetxt(out_file, data, delimiter=',', header=head_line, comments='')
 
-def experiment_one(out_file='/Downloads/exp1.csv'):
+def experiment_one(out_file='/tmp/exp1.csv'):
     """Runs experiment one, where no parameters vary.
 
     Args:
@@ -241,7 +235,8 @@ def experiment_one(out_file='/Downloads/exp1.csv'):
     """
     run_experiment(out_file, [2.3], [0])
 
-def experiment_two(out_file='/Downloads/exp2.csv'):
+
+def experiment_two(out_file='/tmp/exp2.csv'):
     """Runs experiment two, where scale parameter varies.
 
     Args:
@@ -250,7 +245,7 @@ def experiment_two(out_file='/Downloads/exp2.csv'):
     scale_params = np.linspace(1, 3, num=200)
     run_experiment(out_file, scale_params, [0])
 
-def experiment_three(out_file='/Downloads/exp3.csv'):
+def experiment_three(out_file='/tmp/exp3.csv'):
     """Runs experiment three, where scale parameter and repression rate vary.
 
     Args:
@@ -259,3 +254,13 @@ def experiment_three(out_file='/Downloads/exp3.csv'):
     scale_params = np.linspace(1, 3, num=200)
     repression_rates = np.linspace(.1, 3, num=290)
     run_experiment(out_file, scale_params, repression_rates)
+
+
+def experiment_four(out_file='/tmp/exp4.csv'):
+    """Runs experiment four, where number of nodes varies.
+
+    Args:
+        out_file: file to write data to
+    """
+    size_params = np.linspace(1000, 40000, num=40, dtype=int)
+    run_experiment(out_file, [2.3], [0], num_nodes=size_params)
