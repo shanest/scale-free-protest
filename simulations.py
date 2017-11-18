@@ -8,8 +8,6 @@ import tqdm
 # TODO: document the module
 
 
-
-
 class ProtestAgent(object):
     """A simple class, defining an agent who can be active/protesting or not.
     """
@@ -76,7 +74,6 @@ def scale_free_graph(num_nodes, gamma):
     return graph.subgraph(components[0])
 
 
-
 def populate_graph(graph, threshold):
     """Populates a given graph with ProtestAgents.
 
@@ -123,7 +120,7 @@ def activate_nodes(graph, nodes, record_to=None):
         # |= is union + assignment
         record_to |= set(nodes)
 
-        
+
 def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
     """Runs a trial of an experiment.  This method implements the basic logic of
     the spread of protest through a network, based on the number of an agent's
@@ -171,7 +168,6 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
     # TODO: modify to incorporate repression for experiment 3
     while not stop:
 
-        nodes_to_visit = []
         nodes_to_activate = []
 
         # Get set of neighbors that could be activated
@@ -188,15 +184,15 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
                 nodes_to_activate.append(neighbor)
 
         if nodes_to_activate == []:
-            #print('For trial ', trial, ', initial size is ', initial_size)
             stop = True
         else:
             num_iters += 1
             activate_nodes(graph, nodes_to_activate, active_nodes)
 
     print 'Final activation size: ' + str(len(active_nodes)) + ', Trial: ' + str(trial) + ', Initial neighborhood size: ' + str(initial_size) + ', Graph size: ' + str(total_nodes) + ', Scale parameter: ' + str(scaling_parameter)
-    return initial_size, initial_density, initial_clustering, total_nodes, len(active_nodes), num_iters
-  
+    return (initial_size, initial_density, initial_clustering, total_nodes,
+            len(active_nodes), num_iters)
+
 
 def run_trial_from_tuple(tup):
     """Wrapper for run_trial used for parallelizing run_experiment.
@@ -250,7 +246,7 @@ def experiment_one(out_file='/tmp/exp1.csv'):
         out_file: file to write data to
     """
     run_experiment(out_file, [2.3], [0])
-    
+
 
 def experiment_two(out_file='/tmp/exp2.csv'):
     """Runs experiment two, where scale parameter varies.
