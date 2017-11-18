@@ -10,16 +10,19 @@ Designed to work on R 3.2.2
 ##
 ##########################
 library(poweRlaw)
+library(dplyr)
 
 setwd('path/to/working/directory')
 
 # Copied from TwitterProtestSize/Scripts/TwitterProtestSize_TestingDistributions_v4.R
+
+# See if data is more likely to follow a power law distribution compared to Poisson, exponential, lognormal
 compareDistributions <- function(data, distribution){
-	m1 <- displ$new(data)
-	est <- estimate_xmin(m1)
+	m1 <- displ$new(data)  # discrete power law fit of data
+	est <- estimate_xmin(m1)  # get xmin
 	m1$setXmin(est$xmin)
-	m1$setPars(estimate_pars(m1))
-	gof <- est$gof
+	m1$setPars(estimate_pars(m1))  # get parameters
+	gof <- est$gof  # goodness of fit
 
 	if(tolower(distribution)=='poisson'){
 		m2 <- dispois$new(data)
@@ -52,6 +55,7 @@ compareDistributions <- function(data, distribution){
 	return(list(data.frame(xmin=est$xmin, alpha=m1$pars, pl_gof=gof, test_stat = comp$test_statistic, two_sided=comp$p_two_sided, one_sided_vsother=comp$p_one_sided, onesided_othervs=comp2$p_one_sided), m1))
 	# comp$p_two_sided  # Very low p, suggests difference between power law and poisson.  Null is they are the same, so we reject.
 	# comp$p_one_sided  # p still low, confirms power law better
+
 }
 
 

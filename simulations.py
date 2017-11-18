@@ -8,6 +8,8 @@ import tqdm
 # TODO: document the module
 
 
+
+
 class ProtestAgent(object):
     """A simple class, defining an agent who can be active/protesting or not.
     """
@@ -74,6 +76,7 @@ def scale_free_graph(num_nodes, gamma):
     return graph.subgraph(components[0])
 
 
+
 def populate_graph(graph, threshold):
     """Populates a given graph with ProtestAgents.
 
@@ -120,7 +123,8 @@ def activate_nodes(graph, nodes, record_to=None):
         # |= is union + assignment
         record_to |= set(nodes)
 
-def run_trial(num_nodes, scaling_parameter, threshold, repression_rate, trial):
+        
+def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
     """Runs a trial of an experiment.  This method implements the basic logic of
     the spread of protest through a network, based on the number of an agent's
     neighbors who are already protesting.
@@ -192,7 +196,7 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate, trial):
 
     print 'Final activation size: ' + str(len(active_nodes)) + ', Trial: ' + str(trial) + ', Initial neighborhood size: ' + str(initial_size) + ', Graph size: ' + str(total_nodes) + ', Scale parameter: ' + str(scaling_parameter)
     return initial_size, initial_density, initial_clustering, total_nodes, len(active_nodes), num_iters
-
+  
 
 def run_trial_from_tuple(tup):
     """Wrapper for run_trial used for parallelizing run_experiment.
@@ -238,6 +242,7 @@ def run_experiment(out_file, scales, repression_rates,
             'initial_clustering,total_nodes,final_size,num_iters')
     np.savetxt(out_file, data, delimiter=',', header=head_line, comments='')
 
+
 def experiment_one(out_file='/tmp/exp1.csv'):
     """Runs experiment one, where no parameters vary.
 
@@ -245,7 +250,7 @@ def experiment_one(out_file='/tmp/exp1.csv'):
         out_file: file to write data to
     """
     run_experiment(out_file, [2.3], [0])
-
+    
 
 def experiment_two(out_file='/tmp/exp2.csv'):
     """Runs experiment two, where scale parameter varies.
@@ -255,6 +260,7 @@ def experiment_two(out_file='/tmp/exp2.csv'):
     """
     scale_params = np.linspace(1, 3, num=200)
     run_experiment(out_file, scale_params, [0])
+
 
 def experiment_three(out_file='/tmp/exp3.csv'):
     """Runs experiment three, where scale parameter and repression rate vary.
