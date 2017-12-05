@@ -69,9 +69,14 @@ def scale_free_graph(num_nodes, gamma):
     graph = nx.Graph(graph)
     graph.remove_edges_from(loops)
     """
-    scales = nx.utils.powerlaw_sequence(num_nodes, gamma)
-    graph = nx.expected_degree_graph(scales, selfloops=False)
+    graph = None
     # TODO: figure out ZeroDivisionError here, 1.4 seems OK, lower not...
+    while graph is None:
+        try:
+            scales = nx.utils.powerlaw_sequence(num_nodes, gamma)
+            graph = nx.expected_degree_graph(scales, selfloops=False)
+        except:
+            pass
     components = sorted(nx.connected_components(graph), key=len, reverse=True)
     return graph.subgraph(components[0])
 
@@ -261,7 +266,7 @@ def experiment_two(out_file='/tmp/exp2.csv'):
     Args:
         out_file: file to write data to
     """
-    scale_params = np.linspace(2, 3, num=100)
+    scale_params = np.linspace(1, 3, num=200)
     run_experiment(out_file, scale_params, [0])
 
 
@@ -271,7 +276,7 @@ def experiment_three(out_file='/tmp/exp3.csv'):
     Args:
         out_file: file to write data to
     """
-    scale_params = np.linspace(2, 3, num=100)
+    scale_params = np.linspace(1, 3, num=200)
     repression_rates = np.linspace(.1, 3, num=290)
     run_experiment(out_file, scale_params, repression_rates)
 
