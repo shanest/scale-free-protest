@@ -59,8 +59,11 @@ def scale_free_graph(num_nodes, gamma):
     """Method 1: configuration model.  Fails on create_degree_sequence
     with low exponents.
     """
-    scales = nx.utils.create_degree_sequence(num_nodes,
-            nx.utils.powerlaw_sequence, exponent=gamma, max_tries=500)
+    """
+    # TODO: networkx 2.0 removed create_degree_sequence!
+    #scales = nx.utils.create_degree_sequence(num_nodes,
+            #nx.utils.powerlaw_sequence, exponent=gamma, max_tries=500)
+    scales = nx.utils.powerlaw_sequence(num_nodes, gamma)
     graph = nx.configuration_model(scales)
     loops = graph.selfloop_edges()
     graph = nx.Graph(graph)
@@ -69,7 +72,6 @@ def scale_free_graph(num_nodes, gamma):
     scales = nx.utils.powerlaw_sequence(num_nodes, gamma)
     graph = nx.expected_degree_graph(scales, selfloops=False)
     # TODO: figure out ZeroDivisionError here, 1.4 seems OK, lower not...
-    """
     components = sorted(nx.connected_components(graph), key=len, reverse=True)
     return graph.subgraph(components[0])
 
@@ -84,9 +86,8 @@ def populate_graph(graph, threshold):
     Returns:
         a new graph, with graph.node now containing ProtestAgents
     """
-    graph.node = {i: ProtestAgent(threshold=threshold)
-            for i in graph.nodes()}
-    # nx.set_node_attributes(graph, 'agent', agents_for_graph)
+    for i in graph.nodes():
+        graph.nodes[i]['agent'] = ProtestAgent(threshold=threshold)
     return graph
 
 
@@ -100,7 +101,7 @@ def number_active_neighbors(graph, node):
     Returns:
         the number of ProtestAgent neighbors which are active
     """
-    return np.sum([graph.node[neighbor_idx].active
+    return np.sum([graph.nodes[neighbor_idx]['agent'].active
         for neighbor_idx in graph[node].keys()])
 
 
@@ -115,7 +116,7 @@ def activate_nodes(graph, nodes, record_to=None):
                     the newly activated nodes are unioned to it.
     """
     for agent in nodes:
-        graph.node[agent].activate()
+        graph.nodes[agent]['agent'].activate()
     if record_to is not None:
         # |= is union + assignment
         record_to |= set(nodes)
@@ -159,6 +160,10 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
     initial_size = len(initial_neighborhood.nodes())
     initial_density = nx.density(initial_neighborhood)
     initial_clustering = nx.average_clustering(initial_neighborhood)
+    seed_degree = graph.degree[seed_node]
+    initial_degrees = [graph.degree[node] for node in nodes_to_activate]
+    initial_mean_degree = sum(initial_degrees) / len(initial_degrees)
+    initial_median_degree = np.median(initial_degrees)
 
     # get ready
     num_iters = 0
@@ -179,8 +184,8 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
         for neighbor in neighbors_set:
             if (number_active_neighbors(graph, neighbor) /
                     len(graph[neighbor].keys()) >=
-                    graph.node[neighbor].threshold
-                    and not graph.node[neighbor].active):
+                    graph.nodes[neighbor]['agent'].threshold
+                    and not graph.nodes[neighbor]['agent'].active):
                 nodes_to_activate.append(neighbor)
 
         if nodes_to_activate == []:
@@ -189,8 +194,9 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
             num_iters += 1
             activate_nodes(graph, nodes_to_activate, active_nodes)
 
-    print 'Final activation size: ' + str(len(active_nodes)) + ', Trial: ' + str(trial) + ', Initial neighborhood size: ' + str(initial_size) + ', Graph size: ' + str(total_nodes) + ', Scale parameter: ' + str(scaling_parameter)
-    return (initial_size, initial_density, initial_clustering, total_nodes,
+    print 'Final activation size: ' + str(len(active_nodes)) + ', Initial neighborhood size: ' + str(initial_size) + ', Graph size: ' + str(total_nodes) + ', Scale parameter: ' + str(scaling_parameter)
+    return (initial_size, initial_density, initial_clustering, seed_degree,
+            initial_mean_degree, initial_median_degree, total_nodes,
             len(active_nodes), num_iters)
 
 
@@ -222,11 +228,11 @@ def run_experiment(out_file, scales, repression_rates,
                             (scale X repression_rate) setting
         num_procs: how many processes to spawn to run trials
     """
-    parameters = [(nodes, gamma, threshold, repression_rate, trial)
+    parameters = [(nodes, gamma, threshold, repression_rate)
             for nodes in num_nodes
             for gamma in scales
             for repression_rate in repression_rates
-            for trial in xrange(trials_per_setting)]
+            for _ in xrange(trials_per_setting)]
     procs = Pool(num_procs)
 
     # send work to pool, wrapped in a progress bar
@@ -235,7 +241,8 @@ def run_experiment(out_file, scales, repression_rates,
 
     # write output
     head_line = ('num_nodes,gamma,threshold,repression_rate,initial_size,initial_density,' +
-            'initial_clustering,total_nodes,final_size,num_iters')
+            'initial_clustering,seed_degree,initial_mean_degree,' +
+            'initial_median_degree,total_nodes,final_size,num_iters')
     np.savetxt(out_file, data, delimiter=',', header=head_line, comments='')
 
 
@@ -254,7 +261,7 @@ def experiment_two(out_file='/tmp/exp2.csv'):
     Args:
         out_file: file to write data to
     """
-    scale_params = np.linspace(1, 3, num=200)
+    scale_params = np.linspace(2, 3, num=100)
     run_experiment(out_file, scale_params, [0])
 
 
@@ -264,7 +271,7 @@ def experiment_three(out_file='/tmp/exp3.csv'):
     Args:
         out_file: file to write data to
     """
-    scale_params = np.linspace(1, 3, num=200)
+    scale_params = np.linspace(2, 3, num=100)
     repression_rates = np.linspace(.1, 3, num=290)
     run_experiment(out_file, scale_params, repression_rates)
 
@@ -275,5 +282,5 @@ def experiment_four(out_file='/tmp/exp4.csv'):
     Args:
         out_file: file to write data to
     """
-    size_params = np.linspace(1000, 40000, num=40, dtype=int)
+    size_params = np.linspace(1000, 10000, num=40, dtype=int)
     run_experiment(out_file, [2.3], [0], num_nodes=size_params)
