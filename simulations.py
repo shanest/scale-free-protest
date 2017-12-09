@@ -78,7 +78,7 @@ def scale_free_graph(num_nodes, gamma):
         except:
             pass
     components = sorted(nx.connected_components(graph), key=len, reverse=True)
-    return graph.subgraph(components[0])
+    return nx.Graph(graph.subgraph(components[0]))
 
 
 def populate_graph(graph, threshold):
@@ -125,6 +125,23 @@ def activate_nodes(graph, nodes, record_to=None):
     if record_to is not None:
         # |= is union + assignment
         record_to |= set(nodes)
+
+
+def repress(graph, active_nodes, repression_rate):
+    """Implements repression as edge removal.
+
+    Args:
+        graph: the main graph
+        active_nodes: set of nodes currently active in graph
+        repression_rate: probability of removing edge from active node
+    """
+    for node in active_nodes:
+        neighbors = graph[node].keys()
+        remove_which = np.random.binomial(1, repression_rate,
+                                        size=(len(neighbors)))
+        for idx in xrange(len(neighbors)):
+            if remove_which[idx]:
+                graph.remove_edge(node, neighbors[idx])
 
 
 def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
@@ -198,6 +215,8 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
         else:
             num_iters += 1
             activate_nodes(graph, nodes_to_activate, active_nodes)
+            # repression
+            repress(graph, active_nodes, repression_rate)
 
     print 'Final activation size: ' + str(len(active_nodes)) + ', Initial neighborhood size: ' + str(initial_size) + ', Graph size: ' + str(total_nodes) + ', Scale parameter: ' + str(scaling_parameter)
     return (initial_size, initial_density, initial_clustering, seed_degree,
