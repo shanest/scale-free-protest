@@ -296,7 +296,7 @@ def experiment_three(out_file='/tmp/exp3.csv'):
         out_file: file to write data to
     """
     scale_params = np.linspace(1.2, 3, num=200)
-    repression_rates = np.linspace(.1, 3, num=290)
+    repression_rates = np.linspace(.01, 1, num=100)
     run_experiment(out_file, scale_params, repression_rates)
 
 
