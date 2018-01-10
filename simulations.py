@@ -246,7 +246,8 @@ def run_trial_from_tuple(tup):
 
 
 def run_experiment(out_file, scales, repression_rates,
-        num_nodes=[10000], threshold=0.2, trials_per_setting=1000, num_procs=4):
+        num_nodes=[10000], threshold=0.2, trial_type=TrialType.FIXED,
+        trials_per_setting=1000, num_procs=4):
     """Runs an experiment.  Handles the main loops for running individual
     trials, as well as the recording of data to a file. Returns nothing,
     but writes to out_file.
@@ -261,7 +262,7 @@ def run_experiment(out_file, scales, repression_rates,
                             (scale X repression_rate) setting
         num_procs: how many processes to spawn to run trials
     """
-    parameters = [(nodes, gamma, threshold, repression_rate)
+    parameters = [(nodes, gamma, threshold, repression_rate, trial_type)
             for nodes in num_nodes
             for gamma in scales
             for repression_rate in repression_rates
