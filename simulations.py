@@ -8,6 +8,12 @@ import tqdm
 # TODO: document the module
 
 
+class TrialType(object):
+
+    FIXED = 'fixed'
+    RANDOM = 'random'
+
+
 class ProtestAgent(object):
     """A simple class, defining an agent who can be active/protesting or not.
     """
@@ -81,7 +87,7 @@ def scale_free_graph(num_nodes, gamma):
     return nx.Graph(graph.subgraph(components[0]))
 
 
-def populate_graph(graph, threshold):
+def populate_graph(graph, threshold, trial_type):
     """Populates a given graph with ProtestAgents.
 
     Args:
@@ -92,7 +98,9 @@ def populate_graph(graph, threshold):
         a new graph, with graph.node now containing ProtestAgents
     """
     for i in graph.nodes():
-        graph.nodes[i]['agent'] = ProtestAgent(threshold=threshold)
+        graph.nodes[i]['agent'] = (ProtestAgent(threshold=threshold) if
+                                   trial_type == TrialType.FIXED else
+                                   ProtestAgent(threshold=np.random.random()))
     return graph
 
 
@@ -144,7 +152,8 @@ def repress(graph, active_nodes, repression_rate):
                 graph.remove_edge(node, neighbors[idx])
 
 
-def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
+def run_trial(num_nodes, scaling_parameter, threshold, repression_rate,
+              trial_type=TrialType.FIXED):
     """Runs a trial of an experiment.  This method implements the basic logic of
     the spread of protest through a network, based on the number of an agent's
     neighbors who are already protesting.
@@ -167,7 +176,7 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate):
         num_iters: how many iterations it took before stopping
     """
     graph = scale_free_graph(num_nodes, scaling_parameter)
-    graph = populate_graph(graph, threshold)
+    graph = populate_graph(graph, threshold, trial_type)
     total_nodes = len(graph.nodes())
 
     # INITIALIZE
