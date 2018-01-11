@@ -280,7 +280,7 @@ def run_experiment(out_file, scales, repression_rates,
     np.savetxt(out_file, data, delimiter=',', header=head_line, comments='')
 
 
-def experiment_one(out_file='/tmp/exp1.csv'):
+def experiment_one(out_file='/tmp/exp1_fixed.csv'):
     """Runs experiment one, where no parameters vary.
 
     Args:
@@ -289,7 +289,7 @@ def experiment_one(out_file='/tmp/exp1.csv'):
     run_experiment(out_file, [2.3], [0])
 
 
-def experiment_two(out_file='/tmp/exp2.csv'):
+def experiment_two(out_file='/tmp/exp2_fixed.csv'):
     """Runs experiment two, where scale parameter varies.
 
     Args:
@@ -299,7 +299,7 @@ def experiment_two(out_file='/tmp/exp2.csv'):
     run_experiment(out_file, scale_params, [0])
 
 
-def experiment_three(out_file='/tmp/exp3.csv'):
+def experiment_three(out_file='/tmp/exp3_fixed.csv'):
     """Runs experiment three, where scale parameter and repression rate vary.
 
     Args:
@@ -310,7 +310,7 @@ def experiment_three(out_file='/tmp/exp3.csv'):
     run_experiment(out_file, scale_params, repression_rates)
 
 
-def experiment_four(out_file='/tmp/exp4.csv'):
+def experiment_four(out_file='/tmp/exp4_fixed.csv'):
     """Runs experiment four, where number of nodes varies.
 
     Args:
