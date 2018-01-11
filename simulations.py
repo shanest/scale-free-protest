@@ -115,7 +115,7 @@ def number_active_neighbors(graph, node):
         the number of ProtestAgent neighbors which are active
     """
     return np.sum([graph.nodes[neighbor_idx]['agent'].active
-        for neighbor_idx in graph[node].keys()])
+                   for neighbor_idx in graph[node].keys()])
 
 
 def activate_nodes(graph, nodes, record_to=None):
@@ -146,7 +146,7 @@ def repress(graph, active_nodes, repression_rate):
     for node in active_nodes:
         neighbors = graph[node].keys()
         remove_which = np.random.binomial(1, repression_rate,
-                                        size=(len(neighbors)))
+                                          size=(len(neighbors)))
         for idx in xrange(len(neighbors)):
             if remove_which[idx]:
                 graph.remove_edge(node, neighbors[idx])
@@ -246,8 +246,8 @@ def run_trial_from_tuple(tup):
 
 
 def run_experiment(out_file, scales, repression_rates,
-        num_nodes=[10000], threshold=0.2, trial_type=TrialType.FIXED,
-        trials_per_setting=1000, num_procs=4):
+                   num_nodes=[10000], threshold=0.2, trial_type=TrialType.FIXED,
+                   trials_per_setting=1000, num_procs=4):
     """Runs an experiment.  Handles the main loops for running individual
     trials, as well as the recording of data to a file. Returns nothing,
     but writes to out_file.
@@ -263,20 +263,20 @@ def run_experiment(out_file, scales, repression_rates,
         num_procs: how many processes to spawn to run trials
     """
     parameters = [(nodes, gamma, threshold, repression_rate, trial_type)
-            for nodes in num_nodes
-            for gamma in scales
-            for repression_rate in repression_rates
-            for _ in xrange(trials_per_setting)]
+                  for nodes in num_nodes
+                  for gamma in scales
+                  for repression_rate in repression_rates
+                  for _ in xrange(trials_per_setting)]
     procs = Pool(num_procs)
 
     # send work to pool, wrapped in a progress bar
     data = list(tqdm.tqdm(procs.imap(run_trial_from_tuple, parameters),
-        total=len(parameters)))
+                          total=len(parameters)))
 
     # write output
     head_line = ('num_nodes,gamma,threshold,repression_rate,initial_size,initial_density,' +
-            'initial_clustering,seed_degree,initial_mean_degree,' +
-            'initial_median_degree,total_nodes,final_size,num_iters')
+                 'initial_clustering,seed_degree,initial_mean_degree,' +
+                 'initial_median_degree,total_nodes,final_size,num_iters')
     np.savetxt(out_file, data, delimiter=',', header=head_line, comments='')
 
 
