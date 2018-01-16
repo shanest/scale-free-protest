@@ -135,6 +135,21 @@ def activate_nodes(graph, nodes, record_to=None):
         record_to |= set(nodes)
 
 
+def should_be_active(graph, node):
+    """Checks whether a node should be active.
+
+    Args:
+        graph: a graph
+        node: node in graph
+
+    Returns:
+        True iff the number of active neighbors of node in graph exceeds node's
+        threshold
+    """
+    return (number_active_neighbors(graph, node) / len(graph[node].keys()) >=
+            graph.nodes[node]['agent'].threshold)
+
+
 def repress(graph, active_nodes, repression_rate):
     """Implements repression as edge removal.
 
@@ -196,6 +211,9 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate,
     initial_mean_degree = sum(initial_degrees) / len(initial_degrees)
     initial_median_degree = np.median(initial_degrees)
 
+    # initial repression
+    repress(graph, active_nodes, repression_rate)
+
     # get ready
     num_iters = 0
     stop = False
@@ -204,18 +222,27 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate,
     # TODO: modify to incorporate repression for experiment 3
     while not stop:
 
-        nodes_to_activate = []
+        # deactivate nodes that no longer should be active
+        # because repression removes edges, formerly active can be de-activated
+        # by no longer surpassing their threshold
+        to_deactivate = set([])
+        for node in active_nodes:
+            if not should_be_active(graph, node):
+                graph.nodes[node]['agent'].active = False
+                to_deactivate.add(node)
+        active_nodes -= to_deactivate
 
         # Get set of neighbors that could be activated
+        nodes_to_activate = []
         neighbors_set = []
+
         for node in active_nodes:
             neighbors_set.extend(graph[node].keys())
-        neighbors_set = set(neighbors_set)
+        # only activate new candidates that are not already active
+        neighbors_set = set(neighbors_set) - active_nodes
 
         for neighbor in neighbors_set:
-            if (number_active_neighbors(graph, neighbor) /
-                    len(graph[neighbor].keys()) >=
-                    graph.nodes[neighbor]['agent'].threshold
+            if (should_be_active(graph, neighbor)
                     and not graph.nodes[neighbor]['agent'].active):
                 nodes_to_activate.append(neighbor)
 
