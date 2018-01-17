@@ -168,7 +168,7 @@ def repress(graph, active_nodes, repression_rate):
 
 
 def run_trial(num_nodes, scaling_parameter, threshold, repression_rate,
-              trial_type=TrialType.FIXED):
+              trial_type=TrialType.RANDOM):
     """Runs a trial of an experiment.  This method implements the basic logic of
     the spread of protest through a network, based on the number of an agent's
     neighbors who are already protesting.
@@ -273,7 +273,8 @@ def run_trial_from_tuple(tup):
 
 
 def run_experiment(out_file, scales, repression_rates,
-                   num_nodes=[10000], threshold=0.2, trial_type=TrialType.FIXED,
+                   num_nodes=[10000], threshold=None,
+                   trial_type=TrialType.RANDOM,
                    trials_per_setting=1000, num_procs=4):
     """Runs an experiment.  Handles the main loops for running individual
     trials, as well as the recording of data to a file. Returns nothing,
@@ -307,7 +308,7 @@ def run_experiment(out_file, scales, repression_rates,
     np.savetxt(out_file, data, delimiter=',', header=head_line, comments='')
 
 
-def experiment_one(out_file='/tmp/exp1_fixed.csv'):
+def experiment_one(out_file='/tmp/exp1_random.csv'):
     """Runs experiment one, where no parameters vary.
 
     Args:
@@ -316,7 +317,7 @@ def experiment_one(out_file='/tmp/exp1_fixed.csv'):
     run_experiment(out_file, [2.3], [0])
 
 
-def experiment_two(out_file='/tmp/exp2_fixed.csv'):
+def experiment_two(out_file='/tmp/exp2_random.csv'):
     """Runs experiment two, where scale parameter varies.
 
     Args:
@@ -326,7 +327,7 @@ def experiment_two(out_file='/tmp/exp2_fixed.csv'):
     run_experiment(out_file, scale_params, [0])
 
 
-def experiment_three(out_file='/tmp/exp3_fixed.csv'):
+def experiment_three(out_file='/tmp/exp3_random.csv'):
     """Runs experiment three, where scale parameter and repression rate vary.
 
     Args:
@@ -337,7 +338,7 @@ def experiment_three(out_file='/tmp/exp3_fixed.csv'):
     run_experiment(out_file, scale_params, repression_rates)
 
 
-def experiment_four(out_file='/tmp/exp4_fixed.csv'):
+def experiment_four(out_file='/tmp/exp4_random.csv'):
     """Runs experiment four, where number of nodes varies.
 
     Args:
