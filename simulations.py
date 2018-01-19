@@ -230,6 +230,9 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate,
             if not should_be_active(graph, node):
                 graph.nodes[node]['agent'].active = False
                 to_deactivate.add(node)
+
+        # initial neighborhood nodes can never be deactivated
+        to_deactivate -= set(initial_neighborhood.nodes())
         active_nodes -= to_deactivate
 
         # Get set of neighbors that could be activated
@@ -275,7 +278,7 @@ def run_trial_from_tuple(tup):
 def run_experiment(out_file, scales, repression_rates,
                    num_nodes=[10000], threshold=None,
                    trial_type=TrialType.RANDOM,
-                   trials_per_setting=1000, num_procs=4):
+                   trials_per_setting=1000, num_procs=8):
     """Runs an experiment.  Handles the main loops for running individual
     trials, as well as the recording of data to a file. Returns nothing,
     but writes to out_file.
@@ -302,10 +305,12 @@ def run_experiment(out_file, scales, repression_rates,
                           total=len(parameters)))
 
     # write output
-    head_line = ('num_nodes,gamma,threshold,repression_rate,initial_size,initial_density,' +
+    head_line = ('num_nodes,gamma,threshold,repression_rate,thresholdTypes,' +
+                 'initial_size,initial_density,' +
                  'initial_clustering,seed_degree,initial_mean_degree,' +
                  'initial_median_degree,total_nodes,final_size,num_iters')
-    np.savetxt(out_file, data, delimiter=',', header=head_line, comments='')
+    np.savetxt(out_file, data, delimiter=',', header=head_line, comments='',
+               fmt='%5s')
 
 
 def experiment_one(out_file='/tmp/exp1_random.csv'):
@@ -323,7 +328,7 @@ def experiment_two(out_file='/tmp/exp2_random.csv'):
     Args:
         out_file: file to write data to
     """
-    scale_params = np.linspace(1.2, 3, num=200)
+    scale_params = np.linspace(2, 3, num=101)
     run_experiment(out_file, scale_params, [0])
 
 
@@ -333,8 +338,8 @@ def experiment_three(out_file='/tmp/exp3_random.csv'):
     Args:
         out_file: file to write data to
     """
-    scale_params = np.linspace(1.2, 3, num=200)
-    repression_rates = np.linspace(.01, 1, num=100)
+    scale_params = np.linspace(2, 3, num=41)
+    repression_rates = np.linspace(0, 1, num=41)
     run_experiment(out_file, scale_params, repression_rates)
 
 
@@ -344,5 +349,6 @@ def experiment_four(out_file='/tmp/exp4_random.csv'):
     Args:
         out_file: file to write data to
     """
-    size_params = np.linspace(1000, 10000, num=40, dtype=int)
-    run_experiment(out_file, [2.3], [0], num_nodes=size_params)
+    size_params = np.linspace(1000, 10000, num=41, dtype=int)
+    repression_rates = np.linspace(0, 1, num=41)
+    run_experiment(out_file, [2.3], repression_rates, num_nodes=size_params)
