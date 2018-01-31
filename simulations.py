@@ -11,7 +11,8 @@ import tqdm
 class TrialType(object):
 
     FIXED = 'fixed'
-    RANDOM = 'random'
+    UNIFORM = 'uniform'
+    NORMAL = 'normal'
 
 
 class ProtestAgent(object):
@@ -98,9 +99,16 @@ def populate_graph(graph, threshold, trial_type):
         a new graph, with graph.node now containing ProtestAgents
     """
     for i in graph.nodes():
-        graph.nodes[i]['agent'] = (ProtestAgent(threshold=threshold) if
-                                   trial_type == TrialType.FIXED else
-                                   ProtestAgent(threshold=np.random.random()))
+        if trial_type == TrialType.FIXED:
+            threshold = threshold
+        elif trial_type == TrialType.UNIFORM:
+            threshold = np.random.random()
+        elif trial_type == TrialType.NORMAL:
+            # TODO: parameters for normal as input?
+            threshold = max(0, np.random.normal(0.25, 0.122))
+        else:
+            raise ValueError("invalid trial_type passed to populate_graph")
+        graph.nodes[i]['agent'] = ProtestAgent(threshold=threshold)
     return graph
 
 
@@ -168,7 +176,7 @@ def repress(graph, active_nodes, repression_rate):
 
 
 def run_trial(num_nodes, scaling_parameter, threshold, repression_rate,
-              trial_type=TrialType.RANDOM):
+              trial_type):
     """Runs a trial of an experiment.  This method implements the basic logic of
     the spread of protest through a network, based on the number of an agent's
     neighbors who are already protesting.
@@ -277,7 +285,7 @@ def run_trial_from_tuple(tup):
 
 def run_experiment(out_file, scales, repression_rates,
                    num_nodes=[10000], threshold=None,
-                   trial_type=TrialType.RANDOM,
+                   trial_type=TrialType.NORMAL,
                    trials_per_setting=1000, num_procs=8):
     """Runs an experiment.  Handles the main loops for running individual
     trials, as well as the recording of data to a file. Returns nothing,
@@ -313,42 +321,48 @@ def run_experiment(out_file, scales, repression_rates,
                fmt='%5s')
 
 
-def experiment_one(out_file='/tmp/exp1_random.csv'):
+def experiment_one(out_dir='/tmp', trial_type=TrialType.NORMAL):
     """Runs experiment one, where no parameters vary.
 
     Args:
         out_file: file to write data to
     """
-    run_experiment(out_file, [2.3], [0])
+    out_file = '{}/exp1-{}.csv'.format(out_dir, trial_type)
+    run_experiment(out_file, [2.3], [0], trial_type=trial_type)
 
 
-def experiment_two(out_file='/tmp/exp2_random.csv'):
+def experiment_two(out_dir='/tmp', trial_type=TrialType.NORMAL):
     """Runs experiment two, where scale parameter varies.
 
     Args:
         out_file: file to write data to
     """
+    out_file = '{}/exp2-{}.csv'.format(out_dir, trial_type)
     scale_params = np.linspace(2, 3, num=101)
-    run_experiment(out_file, scale_params, [0])
+    run_experiment(out_file, scale_params, [0], trial_type=trial_type)
 
 
-def experiment_three(out_file='/tmp/exp3_random.csv'):
+def experiment_three(out_dir='/tmp', trial_type=TrialType.NORMAL):
     """Runs experiment three, where scale parameter and repression rate vary.
 
     Args:
         out_file: file to write data to
     """
+    out_file = '{}/exp3-{}.csv'.format(out_dir, trial_type)
     scale_params = np.linspace(2, 3, num=41)
     repression_rates = np.linspace(0, 1, num=41)
-    run_experiment(out_file, scale_params, repression_rates)
+    run_experiment(out_file, scale_params, repression_rates,
+                   trial_type=trial_type)
 
 
-def experiment_four(out_file='/tmp/exp4_random.csv'):
+def experiment_four(out_dir='/tmp', trial_type=TrialType.NORMAL):
     """Runs experiment four, where number of nodes varies.
 
     Args:
         out_file: file to write data to
     """
+    out_file = '{}/exp4-{}.csv'.format(out_dir, trial_type)
     size_params = np.linspace(1000, 10000, num=41, dtype=int)
     repression_rates = np.linspace(0, 1, num=41)
-    run_experiment(out_file, [2.3], repression_rates, num_nodes=size_params)
+    run_experiment(out_file, [2.3], repression_rates, num_nodes=size_params,
+                   trial_type=trial_type)
