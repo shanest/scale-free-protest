@@ -424,9 +424,15 @@ def experiment_two(out_dir='/tmp'):
     Args:
         out_file: file to write data to
     """
-    out_file = '{}/exp2-{}.csv'.format(out_dir, trial_type)
+    out_root = '{}/exp2-'.format(out_dir)
     scale_params = np.linspace(2, 3, num=101)
-    run_experiment(out_file, scale_params, [0], trial_type=trial_type)
+    run_experiment(out_root,
+                   trials_per_setting=2, num_procs=2,
+                   graph_type=[GraphType.SCALEFREE],
+                   repression_type=[RepressionType.NODE_REMOVAL],
+                   threshold_type=[ThresholdType.NORMAL],
+                   num_nodes=[1000],
+                   scaling_parameter=scale_params)
 
 
 def experiment_three(out_dir='/tmp'):
@@ -435,11 +441,17 @@ def experiment_three(out_dir='/tmp'):
     Args:
         out_file: file to write data to
     """
-    out_file = '{}/exp3-{}.csv'.format(out_dir, trial_type)
+    out_root = '{}/exp3-'.format(out_dir)
     scale_params = np.linspace(2, 3, num=41)
     repression_rates = np.linspace(0, 1, num=41)
-    run_experiment(out_file, scale_params, repression_rates,
-                   trial_type=trial_type)
+    run_experiment(out_root,
+                   # trials_per_setting=2, num_procs=1,
+                   graph_type=[GraphType.SCALEFREE],
+                   repression_type=[RepressionType.EDGE_REMOVAL],
+                   repression_rate=repression_rates,
+                   threshold_type=[ThresholdType.NORMAL],
+                   num_nodes=[1000],
+                   scaling_parameter=scale_params)
 
 
 def experiment_four(out_dir='/tmp'):
@@ -448,8 +460,16 @@ def experiment_four(out_dir='/tmp'):
     Args:
         out_file: file to write data to
     """
-    out_file = '{}/exp4-{}.csv'.format(out_dir, trial_type)
+    out_root = '{}/exp4-'.format(out_dir)
     size_params = np.linspace(1000, 10000, num=41, dtype=int)
     repression_rates = np.linspace(0, 1, num=41)
-    run_experiment(out_file, [2.3], repression_rates, num_nodes=size_params,
-                   trial_type=trial_type)
+    run_experiment(out_root,
+                   # trials_per_setting=2, num_procs=1,
+                   graph_type=[GraphType.SCALEFREE],
+                   repression_type=[RepressionType.EDGE_REMOVAL],
+                   repression_rate=repression_rates,
+                   threshold_type=[ThresholdType.NORMAL],
+                   num_nodes=size_params,
+                   scaling_parameter=[2.3])
+
+
