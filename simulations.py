@@ -218,6 +218,9 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate,
     initial_degrees = [graph.degree[node] for node in nodes_to_activate]
     initial_mean_degree = sum(initial_degrees) / len(initial_degrees)
     initial_median_degree = np.median(initial_degrees)
+    initial_global_clustering = nx.average_clustering(graph)
+    diameter = nx.algorithms.degree_measures.diameter(graph)
+    avg_shortest_path = nx.average_shortest_path_length(graph)
 
     # initial repression
     repress(graph, active_nodes, repression_rate)
@@ -268,7 +271,8 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate,
     print 'Final activation size: ' + str(len(active_nodes)) + ', Initial neighborhood size: ' + str(initial_size) + ', Graph size: ' + str(total_nodes) + ', Scale parameter: ' + str(scaling_parameter)
     return (initial_size, initial_density, initial_clustering, seed_degree,
             initial_mean_degree, initial_median_degree, total_nodes,
-            len(active_nodes), num_iters)
+            len(active_nodes), num_iters, diameter, initial_global_clustering,
+            avg_shortest_path)
 
 
 def run_trial_from_tuple(tup):
@@ -316,7 +320,8 @@ def run_experiment(out_file, scales, repression_rates,
     head_line = ('num_nodes,gamma,threshold,repression_rate,thresholdTypes,' +
                  'initial_size,initial_density,' +
                  'initial_clustering,seed_degree,initial_mean_degree,' +
-                 'initial_median_degree,total_nodes,final_size,num_iters')
+                 'initial_median_degree,total_nodes,final_size,num_iters,' +
+                 'diameter,initial_global_clustering,avg_shortest_path')
     np.savetxt(out_file, data, delimiter=',', header=head_line, comments='',
                fmt='%5s')
 
