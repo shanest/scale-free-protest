@@ -342,7 +342,9 @@ def product_of_dict_lists(dicts):
 
 def run_trial_from_kw(keywords):
     output = keywords.copy()
-    output.update(run_trial(**keywords))
+    results = run_trial(**keywords)
+    print results
+    output.update(results)
     return output
 
 
@@ -358,7 +360,7 @@ def run_trial_from_tuple(tup):
     return tup + run_trial(*tup)
 
 
-def run_experiment(out_file, trials_per_setting=1000, num_procs=8,
+def run_experiment(out_root, trials_per_setting=1000, num_procs=8,
                    **kwargs):
     # TODO: UPDATE DOCS!
     """Runs an experiment.  Handles the main loops for running individual
@@ -391,28 +393,23 @@ def run_experiment(out_file, trials_per_setting=1000, num_procs=8,
     data = pd.DataFrame(list(tqdm.tqdm(
         procs.imap(run_trial_from_kw, parameters), total=len(parameters))))
     # write output
+    out_file = (out_root +
+                '-'.join(['{}={}'.format(key, value[0])
+                          for key, value in kwargs.items()
+                          if len(kwargs[key]) == 1])
+                + '.csv')
     data.to_csv(out_file)
-    """
-    head_line = ('num_nodes,gamma,threshold,repression_rate,thresholdTypes,' +
-                 'initial_size,initial_density,' +
-                 'initial_clustering,seed_degree,initial_mean_degree,' +
-                 'initial_median_degree,total_nodes,final_size,num_iters,' +
-                 'initial_global_clustering,avg_shortest_path')
-    np.savetxt(out_file, data, delimiter=',', header=head_line, comments='',
-               fmt='%5s')
-    """
 
 
-# TODO: update output file names!!
 def experiment_one(out_dir='/tmp'):
     """Runs experiment one, where no parameters vary.
 
     Args:
         out_file: file to write data to
     """
-    out_file = '{}/exp1.csv'.format(out_dir)
-    run_experiment(out_file,
-                   trials_per_setting=2, num_procs=1,
+    out_root = '{}/exp1-'.format(out_dir)
+    run_experiment(out_root,
+                   # trials_per_setting=2, num_procs=1,
                    graph_type=[GraphType.SCALEFREE],
                    repression_type=[RepressionType.NODE_REMOVAL],
                    threshold_type=[ThresholdType.NORMAL],
@@ -421,7 +418,7 @@ def experiment_one(out_dir='/tmp'):
 
 
 # TODO: update other experiments!
-def experiment_two(out_dir='/tmp', trial_type=TrialType.NORMAL):
+def experiment_two(out_dir='/tmp'):
     """Runs experiment two, where scale parameter varies.
 
     Args:
@@ -432,7 +429,7 @@ def experiment_two(out_dir='/tmp', trial_type=TrialType.NORMAL):
     run_experiment(out_file, scale_params, [0], trial_type=trial_type)
 
 
-def experiment_three(out_dir='/tmp', trial_type=TrialType.NORMAL):
+def experiment_three(out_dir='/tmp'):
     """Runs experiment three, where scale parameter and repression rate vary.
 
     Args:
@@ -445,7 +442,7 @@ def experiment_three(out_dir='/tmp', trial_type=TrialType.NORMAL):
                    trial_type=trial_type)
 
 
-def experiment_four(out_dir='/tmp', trial_type=TrialType.NORMAL):
+def experiment_four(out_dir='/tmp'):
     """Runs experiment four, where number of nodes varies.
 
     Args:
