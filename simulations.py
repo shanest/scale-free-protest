@@ -3,6 +3,7 @@ from multiprocessing import Pool
 
 import numpy as np
 import networkx as nx
+import pandas as pd
 import tqdm
 
 # TODO: document the module
@@ -290,10 +291,17 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate,
             repress(graph, active_nodes)  # , repression_rate)
 
     print 'Final activation size: ' + str(len(active_nodes)) + ', Initial neighborhood size: ' + str(initial_size) + ', Graph size: ' + str(total_nodes) + ', Scale parameter: ' + str(scaling_parameter)
-    return (initial_size, initial_density, initial_clustering, seed_degree,
-            initial_mean_degree, initial_median_degree, total_nodes,
-            len(active_nodes), num_iters, initial_global_clustering,
-            avg_shortest_path)
+    return {'initial_size': initial_size,
+            'initial_density': initial_density,
+            'initial_clustering': initial_clustering,
+            'seed_degree': seed_degree,
+            'initial_mean_degree': initial_mean_degree,
+            'initial_median_degree': initial_median_degree,
+            'total_nodes': total_nodes,
+            'final_size': len(active_nodes),
+            'num_iters': num_iters,
+            'initial_avg_clustering': initial_global_clustering,
+            'avg_shortest_path': avg_shortest_path}
 
 
 def run_trial_from_tuple(tup):
@@ -334,10 +342,11 @@ def run_experiment(out_file, scales, repression_rates,
     procs = Pool(num_procs)
 
     # send work to pool, wrapped in a progress bar
-    data = list(tqdm.tqdm(procs.imap(run_trial_from_tuple, parameters),
-                          total=len(parameters)))
-
+    data = pd.DataFrame(list(tqdm.tqdm(procs.imap(
+        run_trial_from_tuple, parameters), total=len(parameters))))
     # write output
+    data.to_csv(out_file)
+    """
     head_line = ('num_nodes,gamma,threshold,repression_rate,thresholdTypes,' +
                  'initial_size,initial_density,' +
                  'initial_clustering,seed_degree,initial_mean_degree,' +
@@ -345,6 +354,7 @@ def run_experiment(out_file, scales, repression_rates,
                  'initial_global_clustering,avg_shortest_path')
     np.savetxt(out_file, data, delimiter=',', header=head_line, comments='',
                fmt='%5s')
+    """
 
 
 def experiment_one(out_dir='/tmp', trial_type=TrialType.NORMAL):
