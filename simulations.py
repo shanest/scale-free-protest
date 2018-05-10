@@ -1,5 +1,6 @@
 from __future__ import division
 from multiprocessing import Pool
+import itertools
 
 import numpy as np
 import networkx as nx
@@ -9,11 +10,24 @@ import tqdm
 # TODO: document the module
 
 
-class TrialType(object):
+class ThresholdType(object):
 
     FIXED = 'fixed'
     UNIFORM = 'uniform'
     NORMAL = 'normal'
+
+
+class GraphType(object):
+
+    SCALEFREE = 'scale_free_graph'
+    WATTS_STORGATZ = 'nx.watts_storatz_graph'
+    POWERLAW_CLUSTER = 'nx.powerlaw_cluster_graph'
+
+
+class RepressionType(object):
+
+    EDGE_REMOVAL = 'edge_removal'
+    NODE_REMOVAL = 'node_removal'
 
 
 class ProtestAgent(object):
@@ -89,27 +103,19 @@ def scale_free_graph(num_nodes, gamma):
     return nx.Graph(graph.subgraph(components[0]))
 
 
-def populate_graph(graph, threshold, trial_type):
+def populate_graph(graph, threshold_fn):
     """Populates a given graph with ProtestAgents.
 
     Args:
         graph: the graph to populate
-        threshold: the threshold for the ProtestAgents
+        threshold_fn: the fn to call for each ProtestAgent's threshold
 
     Returns:
         a new graph, with graph.node now containing ProtestAgents
     """
     for i in graph.nodes():
-        if trial_type == TrialType.FIXED:
-            threshold = threshold
-        elif trial_type == TrialType.UNIFORM:
-            threshold = np.random.random()
-        elif trial_type == TrialType.NORMAL:
-            # TODO: parameters for normal as input?
-            threshold = max(0, np.random.normal(0.25, 0.122))
-        else:
-            raise ValueError("invalid trial_type passed to populate_graph")
-        graph.nodes[i]['agent'] = ProtestAgent(threshold=threshold)
+        new_threshold = threshold_fn()
+        graph.nodes[i]['agent'] = ProtestAgent(threshold=new_threshold)
     return graph
 
 
@@ -176,7 +182,7 @@ def repress_edge_removal(graph, active_nodes, repression_rate):
                 graph.remove_edge(node, neighbors[idx])
 
 
-def repress(graph, active_nodes):
+def repress_node_removal(graph, active_nodes):
     """Implements repression as targeted node removal.  The probability that an
     active node gets removed is proportional to its share of the activated
     eges.
@@ -197,8 +203,12 @@ def repress(graph, active_nodes):
     active_nodes -= to_remove
 
 
-def run_trial(num_nodes, scaling_parameter, threshold, repression_rate,
-              trial_type):
+def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
+              repression_type=RepressionType.NODE_REMOVAL,
+              threshold_type=ThresholdType.NORMAL,
+              **kwargs):
+              # scaling_parameter, threshold, repression_rate,
+              # trial_type):
     """Runs a trial of an experiment.  This method implements the basic logic of
     the spread of protest through a network, based on the number of an agent's
     neighbors who are already protesting.
@@ -220,8 +230,19 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate,
         final size: number of protesting nodes at stop time
         num_iters: how many iterations it took before stopping
     """
-    graph = scale_free_graph(num_nodes, scaling_parameter)
-    graph = populate_graph(graph, threshold, trial_type)
+    # BUILD GRAPH
+    if graph_type == GraphType.SCALEFREE:
+        graph = scale_free_graph(num_nodes, kwargs['scaling_parameter'])
+    # TODO: finish these options!
+
+    # POPULATE GRAPH WITH AGENTS
+    if threshold_type == ThresholdType.FIXED:
+        threshold_fn = lambda: kwargs['threshold']
+    elif threshold_type == ThresholdType.UNIFORM:
+        threshold_fn = np.random.random
+    elif threshold_type == ThresholdType.NORMAL:
+        threshold_fn = lambda: max(0, np.random.normal(0.25, 0.122))
+    graph = populate_graph(graph, threshold_fn)
     total_nodes = len(graph.nodes())
 
     # INITIALIZE
@@ -244,8 +265,17 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate,
     initial_global_clustering = nx.average_clustering(graph)
     avg_shortest_path = nx.average_shortest_path_length(graph)
 
+    # DEFINE REPRESSION
+    if repression_type == RepressionType.NODE_REMOVAL:
+        def repress(graph, active_nodes):
+            repress_node_removal(graph, active_nodes)
+    elif repression_type == RepressionType.EDGE_REMOVAL:
+        def repress(graph, active_nodes):
+            repress_edge_removal(graph, active_nodes,
+                                 kwargs['repression_rate'])
+
     # initial repression
-    repress(graph, active_nodes)  # , repression_rate)
+    repress(graph, active_nodes)
 
     # get ready
     num_iters = 0
@@ -288,9 +318,10 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate,
             num_iters += 1
             activate_nodes(graph, nodes_to_activate, active_nodes)
             # repression
-            repress(graph, active_nodes)  # , repression_rate)
+            repress(graph, active_nodes)
 
-    print 'Final activation size: ' + str(len(active_nodes)) + ', Initial neighborhood size: ' + str(initial_size) + ', Graph size: ' + str(total_nodes) + ', Scale parameter: ' + str(scaling_parameter)
+    print 'Final activation size: ' + str(len(active_nodes)) + ', Initial neighborhood size: ' + str(initial_size) + ', Graph size: ' + str(total_nodes)
+    # TODO: better printing per trial!
     return {'initial_size': initial_size,
             'initial_density': initial_density,
             'initial_clustering': initial_clustering,
@@ -302,6 +333,17 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate,
             'num_iters': num_iters,
             'initial_avg_clustering': initial_global_clustering,
             'avg_shortest_path': avg_shortest_path}
+
+
+# TODO: document!
+def product_of_dict_lists(dicts):
+    return [dict(zip(dicts, x)) for x in itertools.product(*dicts.values())]
+
+
+def run_trial_from_kw(keywords):
+    output = keywords.copy()
+    output.update(run_trial(**keywords))
+    return output
 
 
 def run_trial_from_tuple(tup):
@@ -316,10 +358,9 @@ def run_trial_from_tuple(tup):
     return tup + run_trial(*tup)
 
 
-def run_experiment(out_file, scales, repression_rates,
-                   num_nodes=[10000], threshold=None,
-                   trial_type=TrialType.NORMAL,
-                   trials_per_setting=1000, num_procs=8):
+def run_experiment(out_file, trials_per_setting=1000, num_procs=8,
+                   **kwargs):
+    # TODO: UPDATE DOCS!
     """Runs an experiment.  Handles the main loops for running individual
     trials, as well as the recording of data to a file. Returns nothing,
     but writes to out_file.
@@ -334,16 +375,21 @@ def run_experiment(out_file, scales, repression_rates,
                             (scale X repression_rate) setting
         num_procs: how many processes to spawn to run trials
     """
+    param_dicts = product_of_dict_lists(kwargs)
+    parameters = [param_dict for param_dict in param_dicts for _ in
+                  xrange(trials_per_setting)]
+    """
     parameters = [(nodes, gamma, threshold, repression_rate, trial_type)
                   for nodes in num_nodes
                   for gamma in scales
                   for repression_rate in repression_rates
                   for _ in xrange(trials_per_setting)]
+    """
     procs = Pool(num_procs)
 
     # send work to pool, wrapped in a progress bar
-    data = pd.DataFrame(list(tqdm.tqdm(procs.imap(
-        run_trial_from_tuple, parameters), total=len(parameters))))
+    data = pd.DataFrame(list(tqdm.tqdm(
+        procs.imap(run_trial_from_kw, parameters), total=len(parameters))))
     # write output
     data.to_csv(out_file)
     """
@@ -357,16 +403,24 @@ def run_experiment(out_file, scales, repression_rates,
     """
 
 
-def experiment_one(out_dir='/tmp', trial_type=TrialType.NORMAL):
+# TODO: update output file names!!
+def experiment_one(out_dir='/tmp'):
     """Runs experiment one, where no parameters vary.
 
     Args:
         out_file: file to write data to
     """
-    out_file = '{}/exp1-{}.csv'.format(out_dir, trial_type)
-    run_experiment(out_file, [2.3], [0], trial_type=trial_type)
+    out_file = '{}/exp1.csv'.format(out_dir)
+    run_experiment(out_file,
+                   trials_per_setting=2, num_procs=1,
+                   graph_type=[GraphType.SCALEFREE],
+                   repression_type=[RepressionType.NODE_REMOVAL],
+                   threshold_type=[ThresholdType.NORMAL],
+                   num_nodes=[1000],
+                   scaling_parameter=[2.3])
 
 
+# TODO: update other experiments!
 def experiment_two(out_dir='/tmp', trial_type=TrialType.NORMAL):
     """Runs experiment two, where scale parameter varies.
 
