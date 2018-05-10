@@ -158,7 +158,7 @@ def should_be_active(graph, node):
             graph.nodes[node]['agent'].threshold)
 
 
-def repress(graph, active_nodes, repression_rate):
+def repress_edge_removal(graph, active_nodes, repression_rate):
     """Implements repression as edge removal.
 
     Args:
@@ -173,6 +173,27 @@ def repress(graph, active_nodes, repression_rate):
         for idx in xrange(len(neighbors)):
             if remove_which[idx]:
                 graph.remove_edge(node, neighbors[idx])
+
+
+def repress(graph, active_nodes):
+    """Implements repression as targeted node removal.  The probability that an
+    active node gets removed is proportional to its share of the activated
+    eges.
+
+    Args:
+        graph: the main graph
+        active_nodes: set of nodes currently active in graph
+    """
+    # list_active = list(active_nodes)
+    num_neighbors = {node: len(list(graph.neighbors(node)))
+                     for node in active_nodes}
+    total_neighbors = sum(num_neighbors.values())
+    to_remove = set()
+    for node in active_nodes:
+        if np.random.random() < num_neighbors[node] / total_neighbors:
+            graph.remove_node(node)
+            to_remove.add(node)
+    active_nodes -= to_remove
 
 
 def run_trial(num_nodes, scaling_parameter, threshold, repression_rate,
@@ -218,12 +239,12 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate,
     initial_degrees = [graph.degree[node] for node in nodes_to_activate]
     initial_mean_degree = sum(initial_degrees) / len(initial_degrees)
     initial_median_degree = np.median(initial_degrees)
+    # initial global measures
     initial_global_clustering = nx.average_clustering(graph)
-    diameter = nx.algorithms.degree_measures.diameter(graph)
     avg_shortest_path = nx.average_shortest_path_length(graph)
 
     # initial repression
-    repress(graph, active_nodes, repression_rate)
+    repress(graph, active_nodes)  # , repression_rate)
 
     # get ready
     num_iters = 0
@@ -266,12 +287,12 @@ def run_trial(num_nodes, scaling_parameter, threshold, repression_rate,
             num_iters += 1
             activate_nodes(graph, nodes_to_activate, active_nodes)
             # repression
-            repress(graph, active_nodes, repression_rate)
+            repress(graph, active_nodes)  # , repression_rate)
 
     print 'Final activation size: ' + str(len(active_nodes)) + ', Initial neighborhood size: ' + str(initial_size) + ', Graph size: ' + str(total_nodes) + ', Scale parameter: ' + str(scaling_parameter)
     return (initial_size, initial_density, initial_clustering, seed_degree,
             initial_mean_degree, initial_median_degree, total_nodes,
-            len(active_nodes), num_iters, diameter, initial_global_clustering,
+            len(active_nodes), num_iters, initial_global_clustering,
             avg_shortest_path)
 
 
@@ -321,7 +342,7 @@ def run_experiment(out_file, scales, repression_rates,
                  'initial_size,initial_density,' +
                  'initial_clustering,seed_degree,initial_mean_degree,' +
                  'initial_median_degree,total_nodes,final_size,num_iters,' +
-                 'diameter,initial_global_clustering,avg_shortest_path')
+                 'initial_global_clustering,avg_shortest_path')
     np.savetxt(out_file, data, delimiter=',', header=head_line, comments='',
                fmt='%5s')
 
