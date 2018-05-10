@@ -282,7 +282,6 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
     stop = False
 
     # MAIN LOOP
-    # TODO: modify to incorporate repression for experiment 3
     while not stop:
 
         # deactivate nodes that no longer should be active
@@ -320,8 +319,6 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
             # repression
             repress(graph, active_nodes)
 
-    print 'Final activation size: ' + str(len(active_nodes)) + ', Initial neighborhood size: ' + str(initial_size) + ', Graph size: ' + str(total_nodes)
-    # TODO: better printing per trial!
     return {'initial_size': initial_size,
             'initial_density': initial_density,
             'initial_clustering': initial_clustering,
@@ -417,7 +414,6 @@ def experiment_one(out_dir='/tmp'):
                    scaling_parameter=[2.3])
 
 
-# TODO: update other experiments!
 def experiment_two(out_dir='/tmp'):
     """Runs experiment two, where scale parameter varies.
 
@@ -427,7 +423,7 @@ def experiment_two(out_dir='/tmp'):
     out_root = '{}/exp2-'.format(out_dir)
     scale_params = np.linspace(2, 3, num=101)
     run_experiment(out_root,
-                   trials_per_setting=2, num_procs=2,
+                   # trials_per_setting=2, num_procs=1,
                    graph_type=[GraphType.SCALEFREE],
                    repression_type=[RepressionType.NODE_REMOVAL],
                    threshold_type=[ThresholdType.NORMAL],
