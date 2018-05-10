@@ -207,8 +207,6 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
               repression_type=RepressionType.NODE_REMOVAL,
               threshold_type=ThresholdType.NORMAL,
               **kwargs):
-              # scaling_parameter, threshold, repression_rate,
-              # trial_type):
     """Runs a trial of an experiment.  This method implements the basic logic of
     the spread of protest through a network, based on the number of an agent's
     neighbors who are already protesting.
@@ -233,7 +231,10 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
     # BUILD GRAPH
     if graph_type == GraphType.SCALEFREE:
         graph = scale_free_graph(num_nodes, kwargs['scaling_parameter'])
-    # TODO: finish these options!
+    elif graph_type == GraphType.WATTS_STORGATZ:
+        graph = nx.watts_storgatz_graph(num_nodes, kwargs['k'], kwargs['p'])
+    elif graph_type == GraphType.POWERLAW_CLUSTER:
+        graph = nx.powerlaw_cluster_graph(num_nodes, kwargs['m'], kwargs['p'])
 
     # POPULATE GRAPH WITH AGENTS
     if threshold_type == ThresholdType.FIXED:
