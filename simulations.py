@@ -20,8 +20,8 @@ class ThresholdType(object):
 class GraphType(object):
 
     SCALEFREE = 'scale_free_graph'
-    WATTS_STORGATZ = 'nx.watts_storatz_graph'
-    POWERLAW_CLUSTER = 'nx.powerlaw_cluster_graph'
+    WATTS_STROGATZ = 'watts_strogatz_graph'
+    POWERLAW_CLUSTER = 'powerlaw_cluster_graph'
 
 
 class RepressionType(object):
@@ -231,8 +231,8 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
     # BUILD GRAPH
     if graph_type == GraphType.SCALEFREE:
         graph = scale_free_graph(num_nodes, kwargs['scaling_parameter'])
-    elif graph_type == GraphType.WATTS_STORGATZ:
-        graph = nx.watts_storgatz_graph(num_nodes, kwargs['k'], kwargs['p'])
+    elif graph_type == GraphType.WATTS_STROGATZ:
+        graph = nx.watts_strogatz_graph(num_nodes, kwargs['k'], kwargs['p'])
     elif graph_type == GraphType.POWERLAW_CLUSTER:
         graph = nx.powerlaw_cluster_graph(num_nodes, kwargs['m'], kwargs['p'])
 
@@ -454,3 +454,28 @@ def experiment_four(out_dir='/tmp'):
                    scaling_parameter=[2.3])
 
 
+def experiment_five(out_dir='/tmp'):
+
+    out_root = '{}/exp5-'.format(out_dir)
+    run_experiment(out_root,
+                   # trials_per_setting=2, num_procs=1,
+                   graph_type=[GraphType.POWERLAW_CLUSTER],
+                   repression_type=[RepressionType.NODE_REMOVAL],
+                   threshold_type=[ThresholdType.NORMAL],
+                   num_nodes=[1000],
+                   p=[0.2],
+                   m=[3])
+
+
+def experiment_six(out_dir='/tmp'):
+
+    out_root = '{}/exp6-'.format(out_dir)
+    p_values = np.logspace(-3, 0, num=20)  # from 10^-3 to 1, in 20 log steps
+    run_experiment(out_root,
+                   # trials_per_setting=2, num_procs=1,
+                   graph_type=[GraphType.WATTS_STROGATZ],
+                   repression_type=[RepressionType.NODE_REMOVAL],
+                   threshold_type=[ThresholdType.NORMAL],
+                   num_nodes=[1000],
+                   k=[50],
+                   p=p_values)
