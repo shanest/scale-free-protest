@@ -238,11 +238,14 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
 
     # POPULATE GRAPH WITH AGENTS
     if threshold_type == ThresholdType.FIXED:
-        threshold_fn = lambda: kwargs['threshold']
+        def threshold_fn():
+            return kwargs['threshold']
     elif threshold_type == ThresholdType.UNIFORM:
         threshold_fn = np.random.random
     elif threshold_type == ThresholdType.NORMAL:
-        threshold_fn = lambda: max(0, np.random.normal(0.25, 0.122))
+        def threshold_fn():
+            # TODO: make these kwargs
+            return max(0, np.random.normal(0.25, 0.122))
     graph = populate_graph(graph, threshold_fn)
     total_nodes = len(graph.nodes())
 
@@ -346,18 +349,6 @@ def run_trial_from_kw(keywords):
     return output
 
 
-def run_trial_from_tuple(tup):
-    """Wrapper for run_trial used for parallelizing run_experiment.
-
-    Args:
-        tup: a tuple, containing the arguments for run_trial, in order
-
-    Returns:
-        a tuple, first with tup, then with the results of run_trial(tup)
-    """
-    return tup + run_trial(*tup)
-
-
 def run_experiment(out_root, trials_per_setting=1000, num_procs=8,
                    **kwargs):
     # TODO: UPDATE DOCS!
@@ -378,16 +369,9 @@ def run_experiment(out_root, trials_per_setting=1000, num_procs=8,
     param_dicts = product_of_dict_lists(kwargs)
     parameters = [param_dict for param_dict in param_dicts for _ in
                   xrange(trials_per_setting)]
-    """
-    parameters = [(nodes, gamma, threshold, repression_rate, trial_type)
-                  for nodes in num_nodes
-                  for gamma in scales
-                  for repression_rate in repression_rates
-                  for _ in xrange(trials_per_setting)]
-    """
-    procs = Pool(num_procs)
 
     # send work to pool, wrapped in a progress bar
+    procs = Pool(num_procs)
     data = pd.DataFrame(list(tqdm.tqdm(
         procs.imap(run_trial_from_kw, parameters), total=len(parameters))))
     # write output
