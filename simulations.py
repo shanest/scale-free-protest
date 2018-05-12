@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, print_function
 from multiprocessing import Pool
 import itertools
 
@@ -345,8 +345,8 @@ def product_of_dict_lists(dicts):
 def run_trial_from_kw(keywords):
     output = keywords.copy()
     results = run_trial(**keywords)
-    print results
     output.update(results)
+    print(output)
     return output
 
 
