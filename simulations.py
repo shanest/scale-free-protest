@@ -198,8 +198,9 @@ def repress_node_removal(graph, active_nodes):
     to_remove = set()
     for node in active_nodes:
         if np.random.random() < num_neighbors[node] / total_neighbors:
-            graph.remove_node(node)
             to_remove.add(node)
+    # only remove nodes at end so that probabilities are from the same time
+    graph.remove_nodes_from(to_remove)
     active_nodes -= to_remove
 
 
