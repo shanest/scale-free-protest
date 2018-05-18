@@ -1,4 +1,7 @@
 from __future__ import division, print_function
+from builtins import zip
+from builtins import range
+from builtins import object
 from multiprocessing import Pool
 import itertools
 
@@ -161,7 +164,8 @@ def should_be_active(graph, node):
         True iff the number of active neighbors of node in graph exceeds node's
         threshold
     """
-    return (number_active_neighbors(graph, node) / len(graph[node].keys()) >=
+    return (number_active_neighbors(graph, node) /
+            len(list(graph[node].keys())) >=
             graph.nodes[node]['agent'].threshold)
 
 
@@ -174,10 +178,10 @@ def repress_edge_removal(graph, active_nodes, repression_rate):
         repression_rate: probability of removing edge from active node
     """
     for node in active_nodes:
-        neighbors = graph[node].keys()
+        neighbors = list(graph[node].keys())
         remove_which = np.random.binomial(1, repression_rate,
                                           size=(len(neighbors)))
-        for idx in xrange(len(neighbors)):
+        for idx in range(len(neighbors)):
             if remove_which[idx]:
                 graph.remove_edge(node, neighbors[idx])
 
@@ -254,7 +258,7 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
     active_nodes = set([])
     seed_node = np.random.choice(graph.nodes())
     nodes_to_activate = [seed_node]
-    nodes_to_activate.extend(graph[seed_node].keys())
+    nodes_to_activate.extend(list(graph[seed_node].keys()))
     activate_nodes(graph, nodes_to_activate, active_nodes)
 
     # record some info
@@ -307,7 +311,7 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
         neighbors_set = []
 
         for node in active_nodes:
-            neighbors_set.extend(graph[node].keys())
+            neighbors_set.extend(list(graph[node].keys()))
         # only activate new candidates that are not already active
         neighbors_set = set(neighbors_set) - active_nodes
 
@@ -339,7 +343,7 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
 
 # TODO: document!
 def product_of_dict_lists(dicts):
-    return [dict(zip(dicts, x)) for x in itertools.product(*dicts.values())]
+    return [dict(list(zip(dicts, x))) for x in itertools.product(*list(dicts.values()))]
 
 
 def run_trial_from_kw(keywords):
@@ -369,7 +373,7 @@ def run_experiment(out_root, trials_per_setting=1000, num_procs=8,
     """
     param_dicts = product_of_dict_lists(kwargs)
     parameters = [param_dict for param_dict in param_dicts for _ in
-                  xrange(trials_per_setting)]
+                  range(trials_per_setting)]
 
     # send work to pool, wrapped in a progress bar
     procs = Pool(num_procs)
