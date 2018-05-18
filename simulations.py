@@ -354,7 +354,7 @@ def run_trial_from_kw(keywords):
     return output
 
 
-def run_experiment(out_root, trials_per_setting=1000, num_procs=8,
+def run_experiment(out_root, trials_per_setting=1000, num_procs=4,
                    **kwargs):
     # TODO: UPDATE DOCS!
     """Runs an experiment.  Handles the main loops for running individual
@@ -476,6 +476,8 @@ def experiment_six(out_dir='/tmp'):
 
     out_root = '{}/exp6-'.format(out_dir)
     p_values = np.logspace(-3, 0, num=20)  # from 10^-3 to 1, in 20 log steps
+    p_values = p_values.tolist()
+    p_values.insert(0, 0)  # add p = 0
     run_experiment(out_root,
                    # trials_per_setting=2, num_procs=1,
                    graph_type=[GraphType.WATTS_STROGATZ],
