@@ -265,7 +265,11 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
     initial_neighborhood = graph.subgraph(nodes_to_activate)
     initial_size = len(initial_neighborhood.nodes())
     initial_density = nx.density(initial_neighborhood)
-    initial_clustering = nx.average_clustering(initial_neighborhood)
+    initial_neighborhood_clustering = nx.average_clustering(
+        initial_neighborhood)
+    # clustering of initial nodes inside main graph
+    initial_nodes_clustering = nx.average_clustering(graph,
+                                                     nodes=nodes_to_activate)
     seed_degree = graph.degree[seed_node]
     initial_degrees = [graph.degree[node] for node in nodes_to_activate]
     initial_mean_degree = sum(initial_degrees) / len(initial_degrees)
@@ -330,20 +334,22 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
 
     return {'initial_size': initial_size,
             'initial_density': initial_density,
-            'initial_clustering': initial_clustering,
+            'initial_neighborhood_clustering': initial_neighborhood_clustering,
+            'initial_nodes_clustering': initial_nodes_clustering,
             'seed_degree': seed_degree,
             'initial_mean_degree': initial_mean_degree,
             'initial_median_degree': initial_median_degree,
             'total_nodes': total_nodes,
             'final_size': len(active_nodes),
             'num_iters': num_iters,
-            'initial_avg_clustering': initial_global_clustering,
+            'initial_global_clustering': initial_global_clustering,
             'avg_shortest_path': avg_shortest_path}
 
 
 # TODO: document!
 def product_of_dict_lists(dicts):
-    return [dict(list(zip(dicts, x))) for x in itertools.product(*list(dicts.values()))]
+    return [dict(list(zip(dicts, x)))
+            for x in itertools.product(*list(dicts.values()))]
 
 
 def run_trial_from_kw(keywords):
