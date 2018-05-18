@@ -466,7 +466,15 @@ def experiment_four(out_dir='/tmp'):
 
 
 def experiment_five(out_dir='/tmp'):
-
+    """From Newman 2003, "The structure and function of complex networks”,
+    social networks may have a clustering coefficient of .16;
+    this is for e-mail messages (e-mail address books are very similar),
+    and I could not find any other measure of social networks.
+    From Figure 2 of the Holme and Kim paper that the powerlaw_cluster method
+    is based on, m_t of .6 will get us clustering of about .16.
+    From the formula on page 2 of their article, m_t = (m-1)*p.
+    So we are using m=3, .6=2*p, p=.3.
+    """
     out_root = '{}/exp5-'.format(out_dir)
     run_experiment(out_root,
                    # trials_per_setting=2, num_procs=1,
