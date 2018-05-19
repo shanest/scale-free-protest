@@ -481,7 +481,7 @@ def experiment_five(out_dir='/tmp'):
                    graph_type=[GraphType.POWERLAW_CLUSTER],
                    repression_type=[RepressionType.NODE_REMOVAL],
                    threshold_type=[ThresholdType.NORMAL],
-                   num_nodes=[1000],
+                   num_nodes=[3000],
                    p=[0.3],
                    m=[3])
 
@@ -533,11 +533,12 @@ def experiment_nine(out_dir='/tmp'):
     out_root = '{}/exp9-'.format(out_dir)
     p_values = np.linspace(0, .9, 41)
     run_experiment(out_root,
-                   # trials_per_setting=2, num_procs=1,
+                   # trials_per_setting=2,
+                   num_procs=1,
                    graph_type=[GraphType.POWERLAW_CLUSTER],
                    repression_type=[RepressionType.NODE_REMOVAL],
                    threshold_type=[ThresholdType.UNIFORM],
-                   num_nodes=[1000],
+                   num_nodes=[3000],
                    p=p_values,
                    m=[3])
 
@@ -553,7 +554,7 @@ def experiment_ten(out_dir='/tmp'):
                    repression_type=[RepressionType.EDGE_REMOVAL],
                    repression_rate=repression_rates,
                    threshold_type=[ThresholdType.UNIFORM],
-                   num_nodes=[1000],
+                   num_nodes=[3000],
                    p=p_values,
                    m=[3])
 
@@ -567,7 +568,7 @@ def experiment_eleven(out_dir='/tmp'):
                    graph_type=[GraphType.POWERLAW_CLUSTER],
                    repression_type=[RepressionType.NODE_REMOVAL],
                    threshold_type=[ThresholdType.NORMAL],
-                   num_nodes=[1000],
+                   num_nodes=[3000],
                    p=p_values,
                    m=[3])
 
@@ -583,6 +584,6 @@ def experiment_twelve(out_dir='/tmp'):
                    repression_type=[RepressionType.EDGE_REMOVAL],
                    repression_rate=repression_rates,
                    threshold_type=[ThresholdType.NORMAL],
-                   num_nodes=[1000],
+                   num_nodes=[3000],
                    p=p_values,
                    m=[3])
