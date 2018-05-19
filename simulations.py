@@ -276,7 +276,7 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
     initial_median_degree = np.median(initial_degrees)
     # initial global measures
     initial_global_clustering = nx.average_clustering(graph)
-    avg_shortest_path = nx.average_shortest_path_length(graph)
+    # avg_shortest_path = nx.average_shortest_path_length(graph)
 
     # DEFINE REPRESSION
     if repression_type == RepressionType.NODE_REMOVAL:
@@ -342,8 +342,8 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
             'total_nodes': total_nodes,
             'final_size': len(active_nodes),
             'num_iters': num_iters,
-            'initial_global_clustering': initial_global_clustering,
-            'avg_shortest_path': avg_shortest_path}
+            'initial_global_clustering': initial_global_clustering}
+            # 'avg_shortest_path': avg_shortest_path}
 
 
 # TODO: document!
