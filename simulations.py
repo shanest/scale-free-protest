@@ -466,7 +466,7 @@ def experiment_four(out_dir='/tmp'):
 
 
 def experiment_five(out_dir='/tmp'):
-    """From Newman 2003, "The structure and function of complex networks”,
+    """From Newman 2003, "The structure and function of complex networks",
     social networks may have a clustering coefficient of .16;
     this is for e-mail messages (e-mail address books are very similar),
     and I could not find any other measure of social networks.
@@ -482,7 +482,7 @@ def experiment_five(out_dir='/tmp'):
                    repression_type=[RepressionType.NODE_REMOVAL],
                    threshold_type=[ThresholdType.NORMAL],
                    num_nodes=[1000],
-                   p=[0.2],
+                   p=[0.3],
                    m=[3])
 
 
@@ -500,3 +500,88 @@ def experiment_six(out_dir='/tmp'):
                    num_nodes=[1000],
                    k=[50],
                    p=p_values)
+
+
+# Scale-free, node removal, uniform threshold
+def experiment_seven(out_dir='/tmp'):
+    out_root = '{}/exp7-'.format(out_dir)
+    scale_params = np.linspace(2, 3, num=41)
+    repression_rates = np.linspace(0, 1, num=41)
+    run_experiment(out_root,
+                   # trials_per_setting=2, num_procs=1,
+                   graph_type=[GraphType.SCALEFREE],
+                   repression_type=[RepressionType.NODE_REMOVAL],
+                   repression_rate=repression_rates,
+                   threshold_type=[ThresholdType.UNIFORM],
+                   num_nodes=[1000],
+                   scaling_parameter=scale_params)
+
+
+# Scale-free, node removal, normal threshold
+def experiment_eight(out_dir='/tmp'):
+    out_root = '{}/exp8-'.format(out_dir)
+    scale_params = np.linspace(2, 3, num=41)
+    repression_rates = np.linspace(0, 1, num=41)
+    run_experiment(out_root,
+                   # trials_per_setting=2, num_procs=1,
+                   graph_type=[GraphType.SCALEFREE],
+                   repression_type=[RepressionType.NODE_REMOVAL],
+                   repression_rate=repression_rates,
+                   threshold_type=[ThresholdType.NORMAL],
+                   num_nodes=[1000],
+                   scaling_parameter=scale_params)
+
+
+# Powerlaw cluster, node removal, uniform threshold
+def experiment_nine(out_dir='/tmp'):
+    out_root = '{}/exp9-'.format(out_dir)
+    p_values = np.linspace(0, .9, 41)
+    run_experiment(out_root,
+                   # trials_per_setting=2, num_procs=1,
+                   graph_type=[GraphType.POWERLAW_CLUSTER],
+                   repression_type=[RepressionType.NODE_REMOVAL],
+                   threshold_type=[ThresholdType.UNIFORM],
+                   num_nodes=[1000],
+                   p=p_values,
+                   m=[3])
+
+
+# Powerlaw cluster, edge removal, uniform threshold
+def experiment_ten(out_dir='/tmp'):
+    out_root = '{}/exp10-'.format(out_dir)
+    p_values = np.linspace(0, .9, 41)
+    run_experiment(out_root,
+                   # trials_per_setting=2, num_procs=1,
+                   graph_type=[GraphType.POWERLAW_CLUSTER],
+                   repression_type=[RepressionType.EDGE_REMOVAL],
+                   threshold_type=[ThresholdType.UNIFORM],
+                   num_nodes=[1000],
+                   p=p_values,
+                   m=[3])
+
+# Powerlaw cluster, node removal, normal threshold
+def experiment_eleven(out_dir='/tmp'):
+    out_root = '{}/exp11-'.format(out_dir)
+    p_values = np.linspace(0, .9, 41)
+    run_experiment(out_root,
+                   # trials_per_setting=2, num_procs=1,
+                   graph_type=[GraphType.POWERLAW_CLUSTER],
+                   repression_type=[RepressionType.NODE_REMOVAL],
+                   threshold_type=[ThresholdType.NORMAL],
+                   num_nodes=[1000],
+                   p=p_values,
+                   m=[3])
+
+
+# Powerlaw cluster, edge removal, normal threshold
+def experiment_twelve(out_dir='/tmp'):
+    out_root = '{}/exp12-'.format(out_dir)
+    p_values = np.linspace(0, .9, 41)
+    run_experiment(out_root,
+                   # trials_per_setting=2, num_procs=1,
+                   graph_type=[GraphType.POWERLAW_CLUSTER],
+                   repression_type=[RepressionType.EDGE_REMOVAL],
+                   threshold_type=[ThresholdType.NORMAL],
+                   num_nodes=[1000],
+                   p=p_values,
+                   m=[3])
