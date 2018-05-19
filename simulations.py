@@ -506,12 +506,10 @@ def experiment_six(out_dir='/tmp'):
 def experiment_seven(out_dir='/tmp'):
     out_root = '{}/exp7-'.format(out_dir)
     scale_params = np.linspace(2, 3, num=41)
-    repression_rates = np.linspace(0, 1, num=41)
     run_experiment(out_root,
                    # trials_per_setting=2, num_procs=1,
                    graph_type=[GraphType.SCALEFREE],
                    repression_type=[RepressionType.NODE_REMOVAL],
-                   repression_rate=repression_rates,
                    threshold_type=[ThresholdType.UNIFORM],
                    num_nodes=[1000],
                    scaling_parameter=scale_params)
@@ -521,12 +519,10 @@ def experiment_seven(out_dir='/tmp'):
 def experiment_eight(out_dir='/tmp'):
     out_root = '{}/exp8-'.format(out_dir)
     scale_params = np.linspace(2, 3, num=41)
-    repression_rates = np.linspace(0, 1, num=41)
     run_experiment(out_root,
                    # trials_per_setting=2, num_procs=1,
                    graph_type=[GraphType.SCALEFREE],
                    repression_type=[RepressionType.NODE_REMOVAL],
-                   repression_rate=repression_rates,
                    threshold_type=[ThresholdType.NORMAL],
                    num_nodes=[1000],
                    scaling_parameter=scale_params)
@@ -550,14 +546,17 @@ def experiment_nine(out_dir='/tmp'):
 def experiment_ten(out_dir='/tmp'):
     out_root = '{}/exp10-'.format(out_dir)
     p_values = np.linspace(0, .9, 41)
+    repression_rates = np.linspace(0, 1, num=41)
     run_experiment(out_root,
                    # trials_per_setting=2, num_procs=1,
                    graph_type=[GraphType.POWERLAW_CLUSTER],
                    repression_type=[RepressionType.EDGE_REMOVAL],
+                   repression_rate=repression_rates,
                    threshold_type=[ThresholdType.UNIFORM],
                    num_nodes=[1000],
                    p=p_values,
                    m=[3])
+
 
 # Powerlaw cluster, node removal, normal threshold
 def experiment_eleven(out_dir='/tmp'):
@@ -577,10 +576,12 @@ def experiment_eleven(out_dir='/tmp'):
 def experiment_twelve(out_dir='/tmp'):
     out_root = '{}/exp12-'.format(out_dir)
     p_values = np.linspace(0, .9, 41)
+    repression_rates = np.linspace(0, 1, num=41)
     run_experiment(out_root,
                    # trials_per_setting=2, num_procs=1,
                    graph_type=[GraphType.POWERLAW_CLUSTER],
                    repression_type=[RepressionType.EDGE_REMOVAL],
+                   repression_rate=repression_rates,
                    threshold_type=[ThresholdType.NORMAL],
                    num_nodes=[1000],
                    p=p_values,
