@@ -4,6 +4,7 @@ from builtins import range
 from builtins import object
 from multiprocessing import Pool
 import itertools
+import argparse
 
 import numpy as np
 import networkx as nx
@@ -587,3 +588,16 @@ def experiment_twelve(out_dir='/tmp'):
                    num_nodes=[3000],
                    p=p_values,
                    m=[3])
+
+
+if __name__ == '__main__':
+
+    # TODO: make all exp options command line?
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--exp', help='which experiment to run', type=str)
+    parser.add_argument('--out_dir', help='path to output', type=str,
+                        default='/tmp')
+    args = parser.parse_args()
+
+    the_globals = globals().copy()
+    the_globals[args.exp](args.out_dir)
