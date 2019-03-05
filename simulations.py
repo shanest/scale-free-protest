@@ -309,6 +309,23 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
     initial_global_clustering = nx.average_clustering(graph)
     # avg_shortest_path = nx.average_shortest_path_length(graph)
 
+    # store initial information
+    initial_dict = {
+        'initial_size': initial_size,
+        'initial_density': initial_density,
+        'initial_neighborhood_clustering': initial_neighborhood_clustering,
+        'initial_nodes_clustering': initial_nodes_clustering,
+        'seed_degree': seed_degree,
+        'seed_eigen_centrality': seed_eigen_centrality,
+        'initial_mean_degree': initial_mean_degree,
+        'initial_mean_eigen_centrality': initial_mean_eigen,
+        'initial_median_degree': initial_median_degree,
+        'total_nodes': total_nodes,
+        'initial_global_clustering': initial_global_clustering,
+        'active_nodes': len(active_nodes),
+        'time_step': 0}
+    data = pd.DataFrame(initial_dict, index=[0])
+
     # DEFINE REPRESSION
     if repression_type == RepressionType.NODE_REMOVAL:
         def repress(graph, active_nodes):
@@ -363,21 +380,14 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
             activate_nodes(graph, nodes_to_activate, active_nodes)
             # repression
             repress(graph, active_nodes)
+            iter_dict = dict(initial_dict)
+            iter_dict['active_nodes'] = len(active_nodes)
+            iter_dict['time_step'] = num_iters
+            # TODO: record other measures per time step here!
+            data = data.append(iter_dict, ignore_index=True)
 
-    return {'initial_size': initial_size,
-            'initial_density': initial_density,
-            'initial_neighborhood_clustering': initial_neighborhood_clustering,
-            'initial_nodes_clustering': initial_nodes_clustering,
-            'seed_degree': seed_degree,
-            'seed_eigen_centrality': seed_eigen_centrality,
-            'initial_mean_degree': initial_mean_degree,
-            'initial_mean_eigen_centrality': initial_mean_eigen,
-            'initial_median_degree': initial_median_degree,
-            'total_nodes': total_nodes,
-            'final_size': len(active_nodes),
-            'num_iters': num_iters,
-            'initial_global_clustering': initial_global_clustering}
-            # 'avg_shortest_path': avg_shortest_path}
+    data['num_iters'] = num_iters
+    return data
 
 
 # TODO: document!
@@ -387,11 +397,11 @@ def product_of_dict_lists(dicts):
 
 
 def run_trial_from_kw(keywords):
-    output = keywords.copy()
     results = run_trial(**keywords)
-    output.update(results)
-    print(output)
-    return output
+    for kw in keywords:
+        results[kw] = keywords[kw]
+    print(results)
+    return results
 
 
 def run_experiment(out_root, trials_per_setting=1000, num_procs=4,
@@ -430,11 +440,11 @@ def run_experiment(out_root, trials_per_setting=1000, num_procs=4,
         # parameters = [params for _ in range(trials_per_setting)]
         # send work to pool, wrapped in a progress bar
         procs = Pool(num_procs)
-        data = data.append(
-            pd.DataFrame(list(tqdm.tqdm(
-                procs.imap(run_trial_from_kw, parameters),
-                total=len(parameters)))),
-            ignore_index=True)
+        print(parameters)
+        results = pd.concat(list(tqdm.tqdm(
+            procs.imap(run_trial_from_kw, parameters),
+            total=len(parameters))), ignore_index=True)
+        data = data.append(results, ignore_index=True)
         # write output
         data.to_csv(out_file)
 
