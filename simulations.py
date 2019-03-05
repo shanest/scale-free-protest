@@ -406,20 +406,24 @@ def run_experiment(out_root, trials_per_setting=1000, num_procs=4,
         num_procs: how many processes to spawn to run trials
     """
     param_dicts = product_of_dict_lists(kwargs)
-    parameters = [param_dict for param_dict in param_dicts for _ in
-                  range(trials_per_setting)]
-
-    # send work to pool, wrapped in a progress bar
-    procs = Pool(num_procs)
-    data = pd.DataFrame(list(tqdm.tqdm(
-        procs.imap(run_trial_from_kw, parameters), total=len(parameters))))
-    # write output
     out_file = (out_root +
                 '-'.join(['{}={}'.format(key, value[0])
                           for key, value in kwargs.items()
                           if len(kwargs[key]) == 1])
                 + '.csv')
-    data.to_csv(out_file)
+
+    data = pd.DataFrame()
+    for params in param_dicts:
+        parameters = [params for _ in range(trials_per_setting)]
+        # send work to pool, wrapped in a progress bar
+        procs = Pool(num_procs)
+        data = data.append(
+            pd.DataFrame(list(tqdm.tqdm(
+                procs.imap(run_trial_from_kw, parameters),
+                total=len(parameters)))),
+            ignore_index=True)
+        # write output
+        data.to_csv(out_file)
 
 
 def experiment_one(out_dir='/tmp'):
@@ -435,7 +439,7 @@ def experiment_one(out_dir='/tmp'):
                    repression_type=[RepressionType.NODE_REMOVAL],
                    threshold_type=[ThresholdType.NORMAL],
                    num_nodes=[1000],
-                   repression_rate=[0.2],
+                   repression_rate=[0.2, 0.4],
                    scaling_parameter=[2.3])
 
 
