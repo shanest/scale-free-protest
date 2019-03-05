@@ -280,6 +280,7 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
     total_nodes = len(graph.nodes())
     # dict: {node: degree}
     centralities = nx.degree_centrality(graph)
+    eigen_centralities = nx.eigenvector_centrality(graph)
 
     # INITIALIZE
     active_nodes = set([])
@@ -301,6 +302,9 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
     initial_degrees = [graph.degree[node] for node in nodes_to_activate]
     initial_mean_degree = sum(initial_degrees) / len(initial_degrees)
     initial_median_degree = np.median(initial_degrees)
+    seed_eigen_centrality = eigen_centralities[seed_node]
+    initial_mean_eigen = sum([eigen_centralities[node] for node in
+                              nodes_to_activate]) / len(nodes_to_activate)
     # initial global measures
     initial_global_clustering = nx.average_clustering(graph)
     # avg_shortest_path = nx.average_shortest_path_length(graph)
@@ -365,7 +369,9 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
             'initial_neighborhood_clustering': initial_neighborhood_clustering,
             'initial_nodes_clustering': initial_nodes_clustering,
             'seed_degree': seed_degree,
+            'seed_eigen_centrality': seed_eigen_centrality,
             'initial_mean_degree': initial_mean_degree,
+            'initial_mean_eigen_centrality': initial_mean_eigen,
             'initial_median_degree': initial_median_degree,
             'total_nodes': total_nodes,
             'final_size': len(active_nodes),
@@ -413,8 +419,15 @@ def run_experiment(out_root, trials_per_setting=1000, num_procs=4,
                 + '.csv')
 
     data = pd.DataFrame()
-    for params in param_dicts:
-        parameters = [params for _ in range(trials_per_setting)]
+    for param_idx in range(len(param_dicts)):
+        params = param_dicts[param_idx]
+        params['param_idx'] = param_idx
+        parameters = []
+        for trial_idx in range(trials_per_setting):
+            t_params = dict(params)  # copy so that can vary trial number
+            t_params['trial_idx'] = trial_idx
+            parameters.append(t_params)
+        # parameters = [params for _ in range(trials_per_setting)]
         # send work to pool, wrapped in a progress bar
         procs = Pool(num_procs)
         data = data.append(
