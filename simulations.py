@@ -8,6 +8,7 @@ import argparse
 
 import numpy as np
 import networkx as nx
+import community  # louvain
 import pandas as pd
 import tqdm
 
@@ -308,23 +309,7 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
     # initial global measures
     initial_global_clustering = nx.average_clustering(graph)
     # avg_shortest_path = nx.average_shortest_path_length(graph)
-
-    # store initial information
-    initial_dict = {
-        'initial_size': initial_size,
-        'initial_density': initial_density,
-        'initial_neighborhood_clustering': initial_neighborhood_clustering,
-        'initial_nodes_clustering': initial_nodes_clustering,
-        'seed_degree': seed_degree,
-        'seed_eigen_centrality': seed_eigen_centrality,
-        'initial_mean_degree': initial_mean_degree,
-        'initial_mean_eigen_centrality': initial_mean_eigen,
-        'initial_median_degree': initial_median_degree,
-        'total_nodes': total_nodes,
-        'initial_global_clustering': initial_global_clustering,
-        'active_nodes': len(active_nodes),
-        'time_step': 0}
-    data = pd.DataFrame(initial_dict, index=[0])
+    partition = community.best_partition(graph)
 
     # DEFINE REPRESSION
     if repression_type == RepressionType.NODE_REMOVAL:
@@ -338,6 +323,24 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
 
     # initial repression
     repress(graph, active_nodes)
+
+    # store initial information
+    initial_dict = {
+        'initial_size': initial_size,
+        'initial_density': initial_density,
+        'initial_neighborhood_clustering': initial_neighborhood_clustering,
+        'initial_nodes_clustering': initial_nodes_clustering,
+        'seed_degree': seed_degree,
+        'seed_eigen_centrality': seed_eigen_centrality,
+        'initial_mean_degree': initial_mean_degree,
+        'initial_mean_eigen_centrality': initial_mean_eigen,
+        'initial_median_degree': initial_median_degree,
+        'num_communities': len(set(partition.values())),
+        'total_nodes': total_nodes,
+        'initial_global_clustering': initial_global_clustering,
+        'active_nodes': len(active_nodes),
+        'time_step': 0}
+    data = pd.DataFrame(initial_dict, index=[0])
 
     # get ready
     num_iters = 0
@@ -400,7 +403,6 @@ def run_trial_from_kw(keywords):
     results = run_trial(**keywords)
     for kw in keywords:
         results[kw] = keywords[kw]
-    print(results)
     return results
 
 
@@ -432,6 +434,7 @@ def run_experiment(out_root, trials_per_setting=1000, num_procs=4,
     for param_idx in range(len(param_dicts)):
         params = param_dicts[param_idx]
         params['param_idx'] = param_idx
+        print(params)
         parameters = []
         for trial_idx in range(trials_per_setting):
             t_params = dict(params)  # copy so that can vary trial number
@@ -440,7 +443,6 @@ def run_experiment(out_root, trials_per_setting=1000, num_procs=4,
         # parameters = [params for _ in range(trials_per_setting)]
         # send work to pool, wrapped in a progress bar
         procs = Pool(num_procs)
-        print(parameters)
         results = pd.concat(list(tqdm.tqdm(
             procs.imap(run_trial_from_kw, parameters),
             total=len(parameters))), ignore_index=True)
