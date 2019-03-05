@@ -187,7 +187,31 @@ def repress_edge_removal(graph, active_nodes, repression_rate):
                 graph.remove_edge(node, neighbors[idx])
 
 
-def repress_node_removal(graph, active_nodes):
+def repress_node_removal(graph, active_nodes, repression_rate, centralities):
+    """Implements repression as targeted node removal.  Removes
+    `repression_rate` percentage of the active nodes, in proportion to their
+    degree centrality.
+
+    Args:
+        graph: the main graph
+        active_nodes: set of nodes currently active in graph
+        repression_rate: what % of active nodes to remove
+        centralities: {node: degree} dict of degree centralities
+    """
+    to_remove = set()
+    active = list(active_nodes)  # order needed for weights to match
+    degrees = np.array([centralities[node] for node in active_nodes])
+    probs = degrees / sum(degrees)
+    num_to_remove = int(repression_rate * len(active))
+    to_remove = set(
+        np.random.choice(active, num_to_remove, replace=False, p=probs))
+    # only remove nodes at end so that probabilities are from the same time
+    graph.remove_nodes_from(to_remove)
+    active_nodes -= to_remove
+
+
+# TODO: just eliminate this method?
+def repress_node_removal_old(graph, active_nodes):
     """Implements repression as targeted node removal.  The probability that an
     active node gets removed is proportional to its share of the activated
     eges.
@@ -254,6 +278,8 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
             return max(0, np.random.normal(0.25, 0.122))
     graph = populate_graph(graph, threshold_fn)
     total_nodes = len(graph.nodes())
+    # dict: {node: degree}
+    centralities = nx.degree_centrality(graph)
 
     # INITIALIZE
     active_nodes = set([])
@@ -282,7 +308,8 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
     # DEFINE REPRESSION
     if repression_type == RepressionType.NODE_REMOVAL:
         def repress(graph, active_nodes):
-            repress_node_removal(graph, active_nodes)
+            repress_node_removal(graph, active_nodes,
+                                 kwargs['repression_rate'], centralities)
     elif repression_type == RepressionType.EDGE_REMOVAL:
         def repress(graph, active_nodes):
             repress_edge_removal(graph, active_nodes,
@@ -403,11 +430,12 @@ def experiment_one(out_dir='/tmp'):
     """
     out_root = '{}/exp1-'.format(out_dir)
     run_experiment(out_root,
-                   # trials_per_setting=2, num_procs=1,
+                   trials_per_setting=2, num_procs=1,
                    graph_type=[GraphType.SCALEFREE],
                    repression_type=[RepressionType.NODE_REMOVAL],
                    threshold_type=[ThresholdType.NORMAL],
                    num_nodes=[1000],
+                   repression_rate=[0.2],
                    scaling_parameter=[2.3])
 
 
