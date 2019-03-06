@@ -5,6 +5,7 @@ from builtins import object
 from multiprocessing import Pool
 import itertools
 import argparse
+from collections import defaultdict
 
 import numpy as np
 import networkx as nx
@@ -247,6 +248,29 @@ def communities_with_protesters(partition, active_nodes):
     return len(set([partition[node] for node in active_nodes]))
 
 
+def protesting_communities(partition, active_nodes):
+    """Gets the communities with protesters, and the size of each.
+
+    Args:
+        partition: node -> community ID dict
+        active_nodes: set of nodes who are protesting
+
+    Returns:
+        community ID -> int dict, where int is the size of comm
+    """
+    communities = defaultdict(int)
+    for node in active_nodes:
+        communities[partition[node]] += 1
+    return communities
+
+
+def mean_community_protest_size(comm_sizes, protesting):
+    if len(protesting) == 0:
+        return 0
+    return (sum(protesting[comm] for comm in protesting) /
+            sum(comm_sizes[comm] for comm in protesting))
+
+
 def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
               repression_type=RepressionType.NODE_REMOVAL,
               threshold_type=ThresholdType.NORMAL,
@@ -301,6 +325,9 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
     betweenness = nx.betweenness_centrality(graph)
     # dict: {node: community ID}
     partition = community.best_partition(graph)
+    community_sizes = defaultdict(int)
+    for node in partition:
+        community_sizes[partition[node]] += 1
 
     # INITIALIZE
     active_nodes = set([])
@@ -345,6 +372,7 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
     repress(graph, active_nodes)
 
     # store initial information
+    communities = protesting_communities(partition, active_nodes)
     initial_dict = {
         'initial_size': initial_size,
         'initial_density': initial_density,
@@ -360,8 +388,9 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
         'total_nodes': total_nodes,
         'initial_global_clustering': initial_global_clustering,
         'active_nodes': len(active_nodes),
-        'communities_with_protesters': communities_with_protesters(
-            partition, active_nodes),
+        'communities_with_protesters': len(communities),
+        'mean_community_protest_percent': mean_community_protest_size(
+            community_sizes, communities),
         'time_step': 0}
     data = pd.DataFrame(initial_dict, index=[0])
 
@@ -406,12 +435,17 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
             activate_nodes(graph, nodes_to_activate, active_nodes)
             # repression
             repress(graph, active_nodes)
+            # get info
+            communities = protesting_communities(partition, active_nodes)
             iter_dict = dict(initial_dict)
             iter_dict['active_nodes'] = len(active_nodes)
             iter_dict['time_step'] = num_iters
             # TODO: record other measures per time step here!
             iter_dict['communities_with_protesters'] = communities_with_protesters(
                 partition, active_nodes)
+            iter_dict['communities_with_protesters'] = len(communities)
+            iter_dict['mean_community_protest_percent'] = mean_community_protest_size(
+                community_sizes, communities)
             data = data.append(iter_dict, ignore_index=True)
 
     data['num_iters'] = num_iters
@@ -581,7 +615,7 @@ def experiment_six(out_dir='/tmp'):
                    repression_type=[RepressionType.NODE_REMOVAL],
                    threshold_type=[ThresholdType.NORMAL],
                    num_nodes=[1000],
-                   k=[50],
+                   k=[15],
                    p=p_values)
 
 
