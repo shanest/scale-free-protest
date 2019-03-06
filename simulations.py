@@ -234,6 +234,19 @@ def repress_node_removal_old(graph, active_nodes):
     active_nodes -= to_remove
 
 
+def communities_with_protesters(partition, active_nodes):
+    """Returns number of communities in a graph with protesters.
+
+    Args:
+        partition: node -> community ID dict
+        active_nodes: set of nodes who are protesting
+
+    Returns:
+        integer, number of communities with protesters
+    """
+    return len(set([partition[node] for node in active_nodes]))
+
+
 def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
               repression_type=RepressionType.NODE_REMOVAL,
               threshold_type=ThresholdType.NORMAL,
@@ -339,6 +352,8 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
         'total_nodes': total_nodes,
         'initial_global_clustering': initial_global_clustering,
         'active_nodes': len(active_nodes),
+        'communities_with_protesters': communities_with_protesters(
+            partition, active_nodes),
         'time_step': 0}
     data = pd.DataFrame(initial_dict, index=[0])
 
@@ -387,6 +402,8 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
             iter_dict['active_nodes'] = len(active_nodes)
             iter_dict['time_step'] = num_iters
             # TODO: record other measures per time step here!
+            iter_dict['communities_with_protesters'] = communities_with_protesters(
+                partition, active_nodes)
             data = data.append(iter_dict, ignore_index=True)
 
     data['num_iters'] = num_iters
