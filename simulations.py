@@ -290,11 +290,17 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
         def threshold_fn():
             # TODO: make these kwargs
             return max(0, np.random.normal(0.25, 0.122))
+
     graph = populate_graph(graph, threshold_fn)
+
+    # some global properties
     total_nodes = len(graph.nodes())
     # dict: {node: degree}
     centralities = nx.degree_centrality(graph)
     eigen_centralities = nx.eigenvector_centrality(graph)
+    betweenness = nx.betweenness_centrality(graph)
+    # dict: {node: community ID}
+    partition = community.best_partition(graph)
 
     # INITIALIZE
     active_nodes = set([])
@@ -312,17 +318,18 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
     # clustering of initial nodes inside main graph
     initial_nodes_clustering = nx.average_clustering(graph,
                                                      nodes=nodes_to_activate)
-    seed_degree = graph.degree[seed_node]
+    # seed_degree = graph.degree[seed_node]
     initial_degrees = [graph.degree[node] for node in nodes_to_activate]
     initial_mean_degree = sum(initial_degrees) / len(initial_degrees)
     initial_median_degree = np.median(initial_degrees)
     seed_eigen_centrality = eigen_centralities[seed_node]
     initial_mean_eigen = sum([eigen_centralities[node] for node in
                               nodes_to_activate]) / len(nodes_to_activate)
+    initial_mean_betweenness = sum([betweenness[node] for node in
+                                    nodes_to_activate]) / len(nodes_to_activate)
     # initial global measures
     initial_global_clustering = nx.average_clustering(graph)
     # avg_shortest_path = nx.average_shortest_path_length(graph)
-    partition = community.best_partition(graph)
 
     # DEFINE REPRESSION
     if repression_type == RepressionType.NODE_REMOVAL:
@@ -343,11 +350,12 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
         'initial_density': initial_density,
         'initial_neighborhood_clustering': initial_neighborhood_clustering,
         'initial_nodes_clustering': initial_nodes_clustering,
-        'seed_degree': seed_degree,
+        # 'seed_degree': seed_degree,
         'seed_eigen_centrality': seed_eigen_centrality,
+        'initial_median_degree': initial_median_degree,
         'initial_mean_degree': initial_mean_degree,
         'initial_mean_eigen_centrality': initial_mean_eigen,
-        'initial_median_degree': initial_median_degree,
+        'initial_mean_betweenness_centrality': initial_mean_betweenness,
         'num_communities': len(set(partition.values())),
         'total_nodes': total_nodes,
         'initial_global_clustering': initial_global_clustering,
