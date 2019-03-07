@@ -322,7 +322,7 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
     # dict: {node: degree}
     centralities = nx.degree_centrality(graph)
     eigen_centralities = nx.eigenvector_centrality(graph)
-    betweenness = nx.betweenness_centrality(graph)
+    # betweenness = nx.betweenness_centrality(graph)
     # dict: {node: community ID}
     partition = community.best_partition(graph)
     community_sizes = defaultdict(int)
@@ -352,8 +352,7 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
     seed_eigen_centrality = eigen_centralities[seed_node]
     initial_mean_eigen = sum([eigen_centralities[node] for node in
                               nodes_to_activate]) / len(nodes_to_activate)
-    initial_mean_betweenness = sum([betweenness[node] for node in
-                                    nodes_to_activate]) / len(nodes_to_activate)
+    # initial_mean_betweenness = sum([betweenness[node] for node in nodes_to_activate]) / len(nodes_to_activate)
     # initial global measures
     initial_global_clustering = nx.average_clustering(graph)
     # avg_shortest_path = nx.average_shortest_path_length(graph)
@@ -383,7 +382,7 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
         'initial_median_degree': initial_median_degree,
         'initial_mean_degree': initial_mean_degree,
         'initial_mean_eigen_centrality': initial_mean_eigen,
-        'initial_mean_betweenness_centrality': initial_mean_betweenness,
+        # 'initial_mean_betweenness_centrality': initial_mean_betweenness,
         'num_communities': len(set(partition.values())),
         'total_nodes': total_nodes,
         'initial_global_clustering': initial_global_clustering,
