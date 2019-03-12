@@ -321,7 +321,7 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
     total_nodes = len(graph.nodes())
     # dict: {node: degree}
     centralities = nx.degree_centrality(graph)
-    eigen_centralities = nx.eigenvector_centrality(graph)
+    eigen_centralities = nx.eigenvector_centrality_numpy(graph)
     # betweenness = nx.betweenness_centrality(graph)
     # dict: {node: community ID}
     partition = community.best_partition(graph)
@@ -505,8 +505,10 @@ def run_experiment(out_root, trials_per_setting=1000, num_procs=4,
             procs.imap(run_trial_from_kw, parameters),
             total=len(parameters))), ignore_index=True)
         data = data.append(results, ignore_index=True)
-        # write output
-        data.to_csv(out_file)
+        with open(out_file, 'wb') as f:
+            # TODO: prevent too many open files bug
+            # write output
+            data.to_csv(f)
 
 
 def experiment_one(out_dir='/tmp'):
@@ -623,9 +625,10 @@ def experiment_seven(out_dir='/tmp'):
     out_root = '{}/exp7-'.format(out_dir)
     scale_params = np.linspace(2, 3, num=41)
     run_experiment(out_root,
-                   # trials_per_setting=2, num_procs=1,
+                   trials_per_setting=2, num_procs=1,
                    graph_type=[GraphType.SCALEFREE],
                    repression_type=[RepressionType.NODE_REMOVAL],
+                   repression_rate=[0.2],
                    threshold_type=[ThresholdType.UNIFORM],
                    num_nodes=[1000],
                    scaling_parameter=scale_params)
@@ -649,8 +652,7 @@ def experiment_nine(out_dir='/tmp'):
     out_root = '{}/exp9-'.format(out_dir)
     p_values = np.linspace(0, .9, 41)
     run_experiment(out_root,
-                   # trials_per_setting=2,
-                   num_procs=1,
+                   trials_per_setting=2, num_procs=1,
                    graph_type=[GraphType.POWERLAW_CLUSTER],
                    repression_type=[RepressionType.NODE_REMOVAL],
                    threshold_type=[ThresholdType.UNIFORM],
