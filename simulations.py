@@ -505,10 +505,10 @@ def run_experiment(out_root, trials_per_setting=1000, num_procs=4,
             procs.imap(run_trial_from_kw, parameters),
             total=len(parameters))), ignore_index=True)
         data = data.append(results, ignore_index=True)
-        with open(out_file, 'wb') as f:
+        with open(out_file, 'wb'):
             # TODO: prevent too many open files bug
             # write output
-            data.to_csv(f)
+            data.to_csv(out_file)
 
 
 def experiment_one(out_dir='/tmp'):
