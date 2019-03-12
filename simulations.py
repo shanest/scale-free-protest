@@ -488,27 +488,23 @@ def run_experiment(out_root, trials_per_setting=1000, num_procs=4,
                           if len(kwargs[key]) == 1])
                 + '.csv')
 
-    data = pd.DataFrame()
+    # build list of parameters
+    parameters = []
     for param_idx in range(len(param_dicts)):
         params = param_dicts[param_idx]
         params['param_idx'] = param_idx
-        print(params)
-        parameters = []
         for trial_idx in range(trials_per_setting):
             t_params = dict(params)  # copy so that can vary trial number
             t_params['trial_idx'] = trial_idx
             parameters.append(t_params)
         # parameters = [params for _ in range(trials_per_setting)]
-        # send work to pool, wrapped in a progress bar
-        procs = Pool(num_procs)
-        results = pd.concat(list(tqdm.tqdm(
-            procs.imap(run_trial_from_kw, parameters),
-            total=len(parameters))), ignore_index=True)
-        data = data.append(results, ignore_index=True)
-        with open(out_file, 'wb'):
-            # TODO: prevent too many open files bug
-            # write output
-            data.to_csv(out_file)
+    # send work to pool, wrapped in a progress bar
+    procs = Pool(num_procs)
+    data = pd.concat(list(tqdm.tqdm(
+        procs.imap(run_trial_from_kw, parameters),
+        total=len(parameters))), ignore_index=True)
+    # write output
+    data.to_csv(out_file)
 
 
 def experiment_one(out_dir='/tmp'):
