@@ -528,6 +528,66 @@ def experiment_one(out_dir='/tmp'):
                    scaling_parameter=[2.3])
 
 
+def experiment_one_a(out_dir='/tmp'):
+    """Runs experiment one-a, parameters varies repression rate and scaling
+    parameter.
+
+    Args:
+        out_file: file to write data to
+    """
+    out_root = '{}/exp1a-'.format(out_dir)
+    run_experiment(out_root,
+                   # trials_per_setting=2, num_procs=1,
+                   graph_type=[GraphType.SCALEFREE],
+                   repression_type=[RepressionType.NODE_REMOVAL],
+                   threshold_type=[ThresholdType.UNIFORM],
+                   num_nodes=[1000],
+                   repression_rate=np.linspace(0, 1, num=(1+1/0.025)),
+                   scaling_parameter=np.linspace(2, 3, num=(1+1/0.025)))
+
+
+def experiment_two_a(out_dir='/tmp'):
+    """Runs experiment two-a, parameters varies repression rate and p in
+    watts-strogatz.
+
+    Args:
+        out_file: file to write data to
+    """
+    out_root = '{}/exp2a-'.format(out_dir)
+    p_values = np.logspace(-3, 0, num=20)  # from 10^-3 to 1, in 20 log steps
+    p_values = p_values.tolist()
+    p_values.insert(0, 0)  # add p = 0
+    run_experiment(out_root,
+                   trials_per_setting=2, num_procs=1,
+                   graph_type=[GraphType.WATTS_STROGATZ],
+                   repression_type=[RepressionType.NODE_REMOVAL],
+                   threshold_type=[ThresholdType.UNIFORM],
+                   num_nodes=[1000],
+                   repression_rate=np.linspace(0, 1, num=(1+1/0.025)),
+                   p=p_values,
+                   k=[15])
+
+
+def experiment_three_a(out_dir='/tmp'):
+    """Runs experiment two-a, parameters varies repression rate and p in
+    watts-strogatz.
+
+    Args:
+        out_file: file to write data to
+    """
+    out_root = '{}/exp3a-'.format(out_dir)
+    p_values = np.linspace(0, .9, 41)
+    run_experiment(out_root,
+                   trials_per_setting=2, num_procs=1,
+                   graph_type=[GraphType.POWERLAW_CLUSTER],
+                   repression_type=[RepressionType.NODE_REMOVAL],
+                   threshold_type=[ThresholdType.UNIFORM],
+                   num_nodes=[1000],
+                   repression_rate=np.linspace(0, 1, num=(1+1/0.025)),
+                   p=p_values,
+                   m=[3])
+
+
 def experiment_two(out_dir='/tmp'):
     """Runs experiment two, where scale parameter varies.
 
