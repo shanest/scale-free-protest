@@ -464,8 +464,7 @@ def run_trial_from_kw(keywords):
     return results
 
 
-def run_experiment(out_root, trials_per_setting=1000, num_procs=4,
-                   **kwargs):
+def run_experiment(out_root, num_procs, trials_per_setting, **kwargs):
     # TODO: UPDATE DOCS!
     """Runs an experiment.  Handles the main loops for running individual
     trials, as well as the recording of data to a file. Returns nothing,
@@ -524,7 +523,8 @@ def experiment_one(out_dir='/tmp'):
                    scaling_parameter=[2.3])
 
 
-def experiment_one_a(out_dir='/tmp'):
+# TODO: UPDATE OTHER EXPERIMENTS TO THIS NEW SIGNATURE
+def experiment_one_a(out_dir, num_procs, trials_per_setting):
     """Runs experiment one-a, parameters varies repression rate and scaling
     parameter.
 
@@ -532,8 +532,7 @@ def experiment_one_a(out_dir='/tmp'):
         out_file: file to write data to
     """
     out_root = '{}/exp1a-'.format(out_dir)
-    run_experiment(out_root,
-                   # trials_per_setting=2, num_procs=1,
+    run_experiment(out_root, num_procs, trials_per_setting,
                    graph_type=[GraphType.SCALEFREE],
                    repression_type=[RepressionType.NODE_REMOVAL],
                    threshold_type=[ThresholdType.UNIFORM],
@@ -542,7 +541,7 @@ def experiment_one_a(out_dir='/tmp'):
                    scaling_parameter=np.linspace(2, 3, num=(1+1/0.025)))
 
 
-def experiment_two_a(out_dir='/tmp'):
+def experiment_two_a(out_dir, num_procs, trials_per_setting):
     """Runs experiment two-a, parameters varies repression rate and p in
     watts-strogatz.
 
@@ -553,8 +552,7 @@ def experiment_two_a(out_dir='/tmp'):
     p_values = np.logspace(-3, 0, num=20)  # from 10^-3 to 1, in 20 log steps
     p_values = p_values.tolist()
     p_values.insert(0, 0)  # add p = 0
-    run_experiment(out_root,
-                   trials_per_setting=2, num_procs=1,
+    run_experiment(out_root, num_procs, trials_per_setting,
                    graph_type=[GraphType.WATTS_STROGATZ],
                    repression_type=[RepressionType.NODE_REMOVAL],
                    threshold_type=[ThresholdType.UNIFORM],
@@ -573,7 +571,7 @@ def experiment_three_a(out_dir='/tmp'):
     """
     out_root = '{}/exp3a-'.format(out_dir)
     p_values = np.linspace(0, .9, 41)
-    run_experiment(out_root,
+    run_experiment(out_root, num_procs, trials_per_setting,
                    trials_per_setting=2, num_procs=1,
                    graph_type=[GraphType.POWERLAW_CLUSTER],
                    repression_type=[RepressionType.NODE_REMOVAL],
@@ -723,7 +721,6 @@ def experiment_ten(out_dir='/tmp'):
     p_values = np.linspace(0, .9, 41)
     repression_rates = np.linspace(0, 1, num=41)
     run_experiment(out_root,
-                   # trials_per_setting=2, num_procs=1,
                    graph_type=[GraphType.POWERLAW_CLUSTER],
                    repression_type=[RepressionType.EDGE_REMOVAL],
                    repression_rate=repression_rates,
@@ -738,7 +735,6 @@ def experiment_eleven(out_dir='/tmp'):
     out_root = '{}/exp11-'.format(out_dir)
     p_values = np.linspace(0, .9, 41)
     run_experiment(out_root,
-                   # trials_per_setting=2, num_procs=1,
                    graph_type=[GraphType.POWERLAW_CLUSTER],
                    repression_type=[RepressionType.NODE_REMOVAL],
                    threshold_type=[ThresholdType.NORMAL],
@@ -768,9 +764,14 @@ if __name__ == '__main__':
     # TODO: make all exp options command line?
     parser = argparse.ArgumentParser()
     parser.add_argument('--exp', help='which experiment to run', type=str)
+    parser.add_argument('--num_procs', help='how many processes to use',
+                        type=int, default=1)
+    parser.add_argument('--trials_per_setting',
+                        help='how many trials per param setting',
+                        type=int, default=2)
     parser.add_argument('--out_dir', help='path to output', type=str,
                         default='/tmp')
     args = parser.parse_args()
 
     the_globals = globals().copy()
-    the_globals[args.exp](args.out_dir)
+    the_globals[args.exp](args.out_dir, args.num_procs, args.trials_per_setting)
