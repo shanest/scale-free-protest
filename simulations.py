@@ -557,12 +557,12 @@ def experiment_two_a(out_dir, num_procs, trials_per_setting):
                    repression_type=[RepressionType.NODE_REMOVAL],
                    threshold_type=[ThresholdType.UNIFORM],
                    num_nodes=[1000],
-                   repression_rate=np.linspace(0, 1, num=(1+1/0.025)),
+                   repression_rate=np.linspace(0, 1, num=(1+1/0.05)),
                    p=p_values,
                    k=[15])
 
 
-def experiment_three_a(out_dir='/tmp'):
+def experiment_three_a(out_dir, num_procs, trials_per_setting):
     """Runs experiment two-a, parameters varies repression rate and p in
     watts-strogatz.
 
@@ -570,14 +570,13 @@ def experiment_three_a(out_dir='/tmp'):
         out_file: file to write data to
     """
     out_root = '{}/exp3a-'.format(out_dir)
-    p_values = np.linspace(0, .9, 41)
+    p_values = np.linspace(0, .9, 21)
     run_experiment(out_root, num_procs, trials_per_setting,
-                   trials_per_setting=2, num_procs=1,
                    graph_type=[GraphType.POWERLAW_CLUSTER],
                    repression_type=[RepressionType.NODE_REMOVAL],
                    threshold_type=[ThresholdType.UNIFORM],
                    num_nodes=[1000],
-                   repression_rate=np.linspace(0, 1, num=(1+1/0.025)),
+                   repression_rate=np.linspace(0, 1, num=(1+1/0.05)),
                    p=p_values,
                    m=[3])
 
