@@ -524,14 +524,16 @@ def experiment_one(out_dir='/tmp'):
 
 
 # TODO: UPDATE OTHER EXPERIMENTS TO THIS NEW SIGNATURE
-def experiment_one_a(out_dir, num_procs, trials_per_setting):
+
+# TODO: better chunking of expt's for cluster comp
+def experiment_one_a1(out_dir, num_procs, trials_per_setting):
     """Runs experiment one-a, parameters varies repression rate and scaling
     parameter.
 
     Args:
         out_file: file to write data to
     """
-    out_root = '{}/exp1a-'.format(out_dir)
+    out_root = '{}/exp1a-1-'.format(out_dir)
     run_experiment(out_root, num_procs, trials_per_setting,
                    graph_type=[GraphType.SCALEFREE],
                    repression_type=[RepressionType.NODE_REMOVAL],
@@ -539,7 +541,61 @@ def experiment_one_a(out_dir, num_procs, trials_per_setting):
                    num_nodes=[1000],
                    # repression_rate=np.linspace(0, 1, num=(1+1/0.025)),
                    repression_rate=np.linspace(0, 0.15, num=101),
-                   scaling_parameter=np.linspace(2, 3, num=(1+1/0.025)))
+                   scaling_parameter=np.linspace(2, 2.25, num=11))
+
+
+def experiment_one_a2(out_dir, num_procs, trials_per_setting):
+    """Runs experiment one-a, parameters varies repression rate and scaling
+    parameter.
+
+    Args:
+        out_file: file to write data to
+    """
+    out_root = '{}/exp1a-2-'.format(out_dir)
+    run_experiment(out_root, num_procs, trials_per_setting,
+                   graph_type=[GraphType.SCALEFREE],
+                   repression_type=[RepressionType.NODE_REMOVAL],
+                   threshold_type=[ThresholdType.UNIFORM],
+                   num_nodes=[1000],
+                   # repression_rate=np.linspace(0, 1, num=(1+1/0.025)),
+                   repression_rate=np.linspace(0, 0.15, num=101),
+                   scaling_parameter=np.linspace(2.25+0.025, 2.5, num=10))
+
+
+def experiment_one_a3(out_dir, num_procs, trials_per_setting):
+    """Runs experiment one-a, parameters varies repression rate and scaling
+    parameter.
+
+    Args:
+        out_file: file to write data to
+    """
+    out_root = '{}/exp1a-3-'.format(out_dir)
+    run_experiment(out_root, num_procs, trials_per_setting,
+                   graph_type=[GraphType.SCALEFREE],
+                   repression_type=[RepressionType.NODE_REMOVAL],
+                   threshold_type=[ThresholdType.UNIFORM],
+                   num_nodes=[1000],
+                   # repression_rate=np.linspace(0, 1, num=(1+1/0.025)),
+                   repression_rate=np.linspace(0, 0.15, num=101),
+                   scaling_parameter=np.linspace(2.5+0.025, 2.75, num=10))
+
+
+def experiment_one_a4(out_dir, num_procs, trials_per_setting):
+    """Runs experiment one-a, parameters varies repression rate and scaling
+    parameter.
+
+    Args:
+        out_file: file to write data to
+    """
+    out_root = '{}/exp1a-4-'.format(out_dir)
+    run_experiment(out_root, num_procs, trials_per_setting,
+                   graph_type=[GraphType.SCALEFREE],
+                   repression_type=[RepressionType.NODE_REMOVAL],
+                   threshold_type=[ThresholdType.UNIFORM],
+                   num_nodes=[1000],
+                   # repression_rate=np.linspace(0, 1, num=(1+1/0.025)),
+                   repression_rate=np.linspace(0, 0.15, num=101),
+                   scaling_parameter=np.linspace(2.75+0.025, 3, num=10))
 
 
 def experiment_two_a(out_dir, num_procs, trials_per_setting):
