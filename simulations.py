@@ -598,14 +598,14 @@ def experiment_one_a4(out_dir, num_procs, trials_per_setting):
                    scaling_parameter=np.linspace(2.75+0.025, 3, num=10))
 
 
-def experiment_two_a(out_dir, num_procs, trials_per_setting):
+def experiment_two_a1(out_dir, num_procs, trials_per_setting):
     """Runs experiment two-a, parameters varies repression rate and p in
     watts-strogatz.
 
     Args:
         out_file: file to write data to
     """
-    out_root = '{}/exp2a-'.format(out_dir)
+    out_root = '{}/exp2a-1-'.format(out_dir)
     p_values = np.logspace(-3, 0, num=20)  # from 10^-3 to 1, in 20 log steps
     p_values = p_values.tolist()
     p_values.insert(0, 0)  # add p = 0
@@ -615,19 +615,41 @@ def experiment_two_a(out_dir, num_procs, trials_per_setting):
                    threshold_type=[ThresholdType.UNIFORM],
                    num_nodes=[1000],
                    # repression_rate=np.linspace(0, 1, num=(1+1/0.05)),
-                   repression_rate=np.linspace(0, 0.15, num=101),
+                   repression_rate=np.linspace(0, 0.075, num=51),
                    p=p_values,
                    k=[15])
 
 
-def experiment_three_a(out_dir, num_procs, trials_per_setting):
+def experiment_two_a2(out_dir, num_procs, trials_per_setting):
     """Runs experiment two-a, parameters varies repression rate and p in
     watts-strogatz.
 
     Args:
         out_file: file to write data to
     """
-    out_root = '{}/exp3a-'.format(out_dir)
+    out_root = '{}/exp2a-2-'.format(out_dir)
+    p_values = np.logspace(-3, 0, num=20)  # from 10^-3 to 1, in 20 log steps
+    p_values = p_values.tolist()
+    p_values.insert(0, 0)  # add p = 0
+    run_experiment(out_root, num_procs, trials_per_setting,
+                   graph_type=[GraphType.WATTS_STROGATZ],
+                   repression_type=[RepressionType.NODE_REMOVAL],
+                   threshold_type=[ThresholdType.UNIFORM],
+                   num_nodes=[1000],
+                   # repression_rate=np.linspace(0, 1, num=(1+1/0.05)),
+                   repression_rate=np.linspace(0.0765, 0.15, num=50),
+                   p=p_values,
+                   k=[15])
+
+
+def experiment_three_a1(out_dir, num_procs, trials_per_setting):
+    """Runs experiment two-a, parameters varies repression rate and p in
+    watts-strogatz.
+
+    Args:
+        out_file: file to write data to
+    """
+    out_root = '{}/exp3a-1-'.format(out_dir)
     p_values = np.linspace(0, .9, 21)
     run_experiment(out_root, num_procs, trials_per_setting,
                    graph_type=[GraphType.POWERLAW_CLUSTER],
@@ -635,7 +657,27 @@ def experiment_three_a(out_dir, num_procs, trials_per_setting):
                    threshold_type=[ThresholdType.UNIFORM],
                    num_nodes=[1000],
                    #repression_rate=np.linspace(0, 1, num=(1+1/0.05)),
-                   repression_rate=np.linspace(0, 0.15, num=101),
+                   repression_rate=np.linspace(0, 0.075, num=51),
+                   p=p_values,
+                   m=[3])
+
+
+def experiment_three_a2(out_dir, num_procs, trials_per_setting):
+    """Runs experiment two-a, parameters varies repression rate and p in
+    watts-strogatz.
+
+    Args:
+        out_file: file to write data to
+    """
+    out_root = '{}/exp3a-2-'.format(out_dir)
+    p_values = np.linspace(0, .9, 21)
+    run_experiment(out_root, num_procs, trials_per_setting,
+                   graph_type=[GraphType.POWERLAW_CLUSTER],
+                   repression_type=[RepressionType.NODE_REMOVAL],
+                   threshold_type=[ThresholdType.UNIFORM],
+                   num_nodes=[1000],
+                   #repression_rate=np.linspace(0, 1, num=(1+1/0.05)),
+                   repression_rate=np.linspace(0.0765, 0.15, num=50),
                    p=p_values,
                    m=[3])
 
