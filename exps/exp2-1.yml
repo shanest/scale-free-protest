@@ -1,0 +1,26 @@
+graph_type: 
+  - watts_strogatz_graph
+repression_type:
+  - node_removal
+threshold_type:
+  - uniform
+num_nodes:
+  - 100
+repression_rate:
+  scale: linspace
+  args:
+    start: 0
+    stop: 0.075
+    num: 51
+p:
+  scale: logspace
+  args:
+    start: -3
+    stop: 0
+    num: 20
+  insert:
+    - 0
+    - 0
+k: 
+  - 15
+trials_per_setting: 1

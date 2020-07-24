@@ -1,0 +1,21 @@
+graph_type: 
+  - scale_free_graph
+repression_type:
+  - node_removal
+threshold_type:
+  - uniform
+num_nodes:
+  - 1000
+repression_rate:
+  scale: linspace
+  args:
+    start: 0
+    stop: 0.15
+    num: 101
+scaling_parameter:
+  scale: linspace
+  args:
+    start: 2.775
+    stop: 3.0
+    num: 10
+trials_per_setting: 1000

@@ -1,0 +1,23 @@
+graph_type: 
+  - powerlaw_cluster_graph
+repression_type:
+  - node_removal
+threshold_type:
+  - uniform
+num_nodes:
+  - 1000
+repression_rate:
+  scale: linspace
+  args:
+    start: 0
+    stop: 0.075
+    num: 51
+p:
+  scale: linspace
+  args:
+    start: 0
+    stop: 0.9
+    num: 21
+m: 
+  - 3
+trials_per_setting: 1000
