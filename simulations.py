@@ -208,8 +208,17 @@ def repress_node_removal(graph, active_nodes, repression_rate, centralities):
     """
     to_remove = set()
     active = list(active_nodes)  # order needed for weights to match
+    # TODO: make this more modular?
+    # prob propto: norm(degrees) + (1-norm(thresholds))
     degrees = np.array([centralities[node] for node in active_nodes])
-    probs = degrees / sum(degrees)
+    degrees /= max(degrees)
+    thresholds = np.array(
+        [graph.nodes[node]["agent"].threshold for node in active_nodes]
+    )
+    thresholds /= max(thresholds)
+    thresholds = [1 - threshold for threshold in thresholds]
+    combined = degrees + thresholds
+    probs = combined / sum(combined)
     num_to_remove = int(repression_rate * len(active))
     to_remove = set(np.random.choice(active, num_to_remove, replace=False, p=probs))
     # only remove nodes at end so that probabilities are from the same time

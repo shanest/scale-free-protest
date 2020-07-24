@@ -14,4 +14,4 @@ scaling_parameter:
   start: 2
   stop: 2.25
   num: 11
-trials_per_setting: 2
+trials_per_setting: 1
