@@ -987,10 +987,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     config = parse_config(args.exp)
-    print(config)
 
     out_root = f"{args.out_dir}/{args.exp}-"
     run_experiment(out_root, num_procs=args.num_procs, **config)
-
-    # the_globals = globals().copy()
-    # the_globals[args.exp](args.out_dir, args.num_procs, args.trials_per_setting)
