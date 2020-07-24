@@ -6,34 +6,36 @@ from multiprocessing import Pool
 import itertools
 import argparse
 from collections import defaultdict
+from typing import Dict
 
 import numpy as np
 import networkx as nx
 import community  # louvain
 import pandas as pd
 import tqdm
+import yaml
 
 # TODO: document the module
 
 
 class ThresholdType(object):
 
-    FIXED = 'fixed'
-    UNIFORM = 'uniform'
-    NORMAL = 'normal'
+    FIXED = "fixed"
+    UNIFORM = "uniform"
+    NORMAL = "normal"
 
 
 class GraphType(object):
 
-    SCALEFREE = 'scale_free_graph'
-    WATTS_STROGATZ = 'watts_strogatz_graph'
-    POWERLAW_CLUSTER = 'powerlaw_cluster_graph'
+    SCALEFREE = "scale_free_graph"
+    WATTS_STROGATZ = "watts_strogatz_graph"
+    POWERLAW_CLUSTER = "powerlaw_cluster_graph"
 
 
 class RepressionType(object):
 
-    EDGE_REMOVAL = 'edge_removal'
-    NODE_REMOVAL = 'node_removal'
+    EDGE_REMOVAL = "edge_removal"
+    NODE_REMOVAL = "node_removal"
 
 
 class ProtestAgent(object):
@@ -121,7 +123,7 @@ def populate_graph(graph, threshold_fn):
     """
     for i in graph.nodes():
         new_threshold = threshold_fn()
-        graph.nodes[i]['agent'] = ProtestAgent(threshold=new_threshold)
+        graph.nodes[i]["agent"] = ProtestAgent(threshold=new_threshold)
     return graph
 
 
@@ -135,8 +137,12 @@ def number_active_neighbors(graph, node):
     Returns:
         the number of ProtestAgent neighbors which are active
     """
-    return np.sum([graph.nodes[neighbor_idx]['agent'].active
-                   for neighbor_idx in graph[node].keys()])
+    return np.sum(
+        [
+            graph.nodes[neighbor_idx]["agent"].active
+            for neighbor_idx in graph[node].keys()
+        ]
+    )
 
 
 def activate_nodes(graph, nodes, record_to=None):
@@ -150,7 +156,7 @@ def activate_nodes(graph, nodes, record_to=None):
                     the newly activated nodes are unioned to it.
     """
     for agent in nodes:
-        graph.nodes[agent]['agent'].activate()
+        graph.nodes[agent]["agent"].activate()
     if record_to is not None:
         # |= is union + assignment
         record_to |= set(nodes)
@@ -167,9 +173,10 @@ def should_be_active(graph, node):
         True iff the number of active neighbors of node in graph exceeds node's
         threshold
     """
-    return (number_active_neighbors(graph, node) /
-            len(list(graph[node].keys())) >=
-            graph.nodes[node]['agent'].threshold)
+    return (
+        number_active_neighbors(graph, node) / len(list(graph[node].keys()))
+        >= graph.nodes[node]["agent"].threshold
+    )
 
 
 def repress_edge_removal(graph, active_nodes, repression_rate):
@@ -182,8 +189,7 @@ def repress_edge_removal(graph, active_nodes, repression_rate):
     """
     for node in active_nodes:
         neighbors = list(graph[node].keys())
-        remove_which = np.random.binomial(1, repression_rate,
-                                          size=(len(neighbors)))
+        remove_which = np.random.binomial(1, repression_rate, size=(len(neighbors)))
         for idx in range(len(neighbors)):
             if remove_which[idx]:
                 graph.remove_edge(node, neighbors[idx])
@@ -205,8 +211,7 @@ def repress_node_removal(graph, active_nodes, repression_rate, centralities):
     degrees = np.array([centralities[node] for node in active_nodes])
     probs = degrees / sum(degrees)
     num_to_remove = int(repression_rate * len(active))
-    to_remove = set(
-        np.random.choice(active, num_to_remove, replace=False, p=probs))
+    to_remove = set(np.random.choice(active, num_to_remove, replace=False, p=probs))
     # only remove nodes at end so that probabilities are from the same time
     graph.remove_nodes_from(to_remove)
     active_nodes -= to_remove
@@ -223,8 +228,7 @@ def repress_node_removal_old(graph, active_nodes):
         active_nodes: set of nodes currently active in graph
     """
     # list_active = list(active_nodes)
-    num_neighbors = {node: len(list(graph.neighbors(node)))
-                     for node in active_nodes}
+    num_neighbors = {node: len(list(graph.neighbors(node))) for node in active_nodes}
     total_neighbors = sum(num_neighbors.values())
     to_remove = set()
     for node in active_nodes:
@@ -267,14 +271,18 @@ def protesting_communities(partition, active_nodes):
 def mean_community_protest_size(comm_sizes, protesting):
     if len(protesting) == 0:
         return 0
-    return (sum(protesting[comm] for comm in protesting) /
-            sum(comm_sizes[comm] for comm in protesting))
+    return sum(protesting[comm] for comm in protesting) / sum(
+        comm_sizes[comm] for comm in protesting
+    )
 
 
-def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
-              repression_type=RepressionType.NODE_REMOVAL,
-              threshold_type=ThresholdType.NORMAL,
-              **kwargs):
+def run_trial(
+    num_nodes=1000,
+    graph_type=GraphType.SCALEFREE,
+    repression_type=RepressionType.NODE_REMOVAL,
+    threshold_type=ThresholdType.NORMAL,
+    **kwargs,
+):
     """Runs a trial of an experiment.  This method implements the basic logic of
     the spread of protest through a network, based on the number of an agent's
     neighbors who are already protesting.
@@ -298,19 +306,22 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
     """
     # BUILD GRAPH
     if graph_type == GraphType.SCALEFREE:
-        graph = scale_free_graph(num_nodes, kwargs['scaling_parameter'])
+        graph = scale_free_graph(num_nodes, kwargs["scaling_parameter"])
     elif graph_type == GraphType.WATTS_STROGATZ:
-        graph = nx.watts_strogatz_graph(num_nodes, kwargs['k'], kwargs['p'])
+        graph = nx.watts_strogatz_graph(num_nodes, kwargs["k"], kwargs["p"])
     elif graph_type == GraphType.POWERLAW_CLUSTER:
-        graph = nx.powerlaw_cluster_graph(num_nodes, kwargs['m'], kwargs['p'])
+        graph = nx.powerlaw_cluster_graph(num_nodes, kwargs["m"], kwargs["p"])
 
     # POPULATE GRAPH WITH AGENTS
     if threshold_type == ThresholdType.FIXED:
+
         def threshold_fn():
-            return kwargs['threshold']
+            return kwargs["threshold"]
+
     elif threshold_type == ThresholdType.UNIFORM:
         threshold_fn = np.random.random
     elif threshold_type == ThresholdType.NORMAL:
+
         def threshold_fn():
             # TODO: make these kwargs
             return max(0, np.random.normal(0.25, 0.122))
@@ -340,18 +351,27 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
     initial_neighborhood = graph.subgraph(nodes_to_activate)
     initial_size = len(initial_neighborhood.nodes())
     initial_density = nx.density(initial_neighborhood)
-    initial_neighborhood_clustering = nx.average_clustering(
-        initial_neighborhood)
+    initial_neighborhood_clustering = nx.average_clustering(initial_neighborhood)
     # clustering of initial nodes inside main graph
-    initial_nodes_clustering = nx.average_clustering(graph,
-                                                     nodes=nodes_to_activate)
+    initial_nodes_clustering = nx.average_clustering(graph, nodes=nodes_to_activate)
     # seed_degree = graph.degree[seed_node]
     initial_degrees = [graph.degree[node] for node in nodes_to_activate]
     initial_mean_degree = sum(initial_degrees) / len(initial_degrees)
     initial_median_degree = np.median(initial_degrees)
     seed_eigen_centrality = eigen_centralities[seed_node]
-    initial_mean_eigen = sum([eigen_centralities[node] for node in
-                              nodes_to_activate]) / len(nodes_to_activate)
+    initial_mean_eigen = sum(
+        [eigen_centralities[node] for node in nodes_to_activate]
+    ) / len(nodes_to_activate)
+    # threshold statistics
+    initial_mean_threshold = sum(
+        [graph.nodes[node]["agent"].threshold for node in initial_neighborhood]
+    ) / len(nodes_to_activate)
+    initial_neighbors = set(
+        [neighbor for neighbor in graph[node] for node in initial_neighborhood]
+    )
+    initial_neighbors_mean_threshold = sum(
+        [graph.nodes[node]["agent"].threshold for node in initial_neighbors]
+    ) / len(initial_neighbors)
     # initial_mean_betweenness = sum([betweenness[node] for node in nodes_to_activate]) / len(nodes_to_activate)
     # initial global measures
     initial_global_clustering = nx.average_clustering(graph)
@@ -359,13 +379,16 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
 
     # DEFINE REPRESSION
     if repression_type == RepressionType.NODE_REMOVAL:
+
         def repress(graph, active_nodes):
-            repress_node_removal(graph, active_nodes,
-                                 kwargs['repression_rate'], centralities)
+            repress_node_removal(
+                graph, active_nodes, kwargs["repression_rate"], centralities
+            )
+
     elif repression_type == RepressionType.EDGE_REMOVAL:
+
         def repress(graph, active_nodes):
-            repress_edge_removal(graph, active_nodes,
-                                 kwargs['repression_rate'])
+            repress_edge_removal(graph, active_nodes, kwargs["repression_rate"])
 
     # initial repression
     repress(graph, active_nodes)
@@ -373,24 +396,28 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
     # store initial information
     communities = protesting_communities(partition, active_nodes)
     initial_dict = {
-        'initial_size': initial_size,
-        'initial_density': initial_density,
-        'initial_neighborhood_clustering': initial_neighborhood_clustering,
-        'initial_nodes_clustering': initial_nodes_clustering,
+        "initial_size": initial_size,
+        "initial_density": initial_density,
+        "initial_neighborhood_clustering": initial_neighborhood_clustering,
+        "initial_nodes_clustering": initial_nodes_clustering,
         # 'seed_degree': seed_degree,
-        'seed_eigen_centrality': seed_eigen_centrality,
-        'initial_median_degree': initial_median_degree,
-        'initial_mean_degree': initial_mean_degree,
-        'initial_mean_eigen_centrality': initial_mean_eigen,
+        "seed_eigen_centrality": seed_eigen_centrality,
+        "initial_median_degree": initial_median_degree,
+        "initial_mean_degree": initial_mean_degree,
+        "initial_mean_eigen_centrality": initial_mean_eigen,
+        "initial_mean_threshold": initial_mean_threshold,
+        "initial_neighbors_mean_threshold": initial_neighbors_mean_threshold,
         # 'initial_mean_betweenness_centrality': initial_mean_betweenness,
-        'num_communities': len(set(partition.values())),
-        'total_nodes': total_nodes,
-        'initial_global_clustering': initial_global_clustering,
-        'active_nodes': len(active_nodes),
-        'communities_with_protesters': len(communities),
-        'mean_community_protest_percent': mean_community_protest_size(
-            community_sizes, communities),
-        'time_step': 0}
+        "num_communities": len(set(partition.values())),
+        "total_nodes": total_nodes,
+        "initial_global_clustering": initial_global_clustering,
+        "active_nodes": len(active_nodes),
+        "communities_with_protesters": len(communities),
+        "mean_community_protest_percent": mean_community_protest_size(
+            community_sizes, communities
+        ),
+        "time_step": 0,
+    }
     data = pd.DataFrame(initial_dict, index=[0])
 
     # get ready
@@ -406,7 +433,7 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
         to_deactivate = set([])
         for node in active_nodes:
             if not should_be_active(graph, node):
-                graph.nodes[node]['agent'].active = False
+                graph.nodes[node]["agent"].active = False
                 to_deactivate.add(node)
 
         # initial neighborhood nodes can never be deactivated
@@ -423,8 +450,10 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
         neighbors_set = set(neighbors_set) - active_nodes
 
         for neighbor in neighbors_set:
-            if (should_be_active(graph, neighbor)
-                    and not graph.nodes[neighbor]['agent'].active):
+            if (
+                should_be_active(graph, neighbor)
+                and not graph.nodes[neighbor]["agent"].active
+            ):
                 nodes_to_activate.append(neighbor)
 
         if nodes_to_activate == []:
@@ -437,24 +466,25 @@ def run_trial(num_nodes=1000, graph_type=GraphType.SCALEFREE,
             # get info
             communities = protesting_communities(partition, active_nodes)
             iter_dict = dict(initial_dict)
-            iter_dict['active_nodes'] = len(active_nodes)
-            iter_dict['time_step'] = num_iters
+            iter_dict["active_nodes"] = len(active_nodes)
+            iter_dict["time_step"] = num_iters
             # TODO: record other measures per time step here!
-            iter_dict['communities_with_protesters'] = communities_with_protesters(
-                partition, active_nodes)
-            iter_dict['communities_with_protesters'] = len(communities)
-            iter_dict['mean_community_protest_percent'] = mean_community_protest_size(
-                community_sizes, communities)
+            iter_dict["communities_with_protesters"] = communities_with_protesters(
+                partition, active_nodes
+            )
+            iter_dict["communities_with_protesters"] = len(communities)
+            iter_dict["mean_community_protest_percent"] = mean_community_protest_size(
+                community_sizes, communities
+            )
             data = data.append(iter_dict, ignore_index=True)
 
-    data['num_iters'] = num_iters
+    data["num_iters"] = num_iters
     return data
 
 
 # TODO: document!
 def product_of_dict_lists(dicts):
-    return [dict(list(zip(dicts, x)))
-            for x in itertools.product(*list(dicts.values()))]
+    return [dict(list(zip(dicts, x))) for x in itertools.product(*list(dicts.values()))]
 
 
 def run_trial_from_kw(keywords):
@@ -481,46 +511,67 @@ def run_experiment(out_root, num_procs, trials_per_setting, **kwargs):
         num_procs: how many processes to spawn to run trials
     """
     param_dicts = product_of_dict_lists(kwargs)
-    out_file = (out_root +
-                '-'.join(['{}={}'.format(key, value[0])
-                          for key, value in kwargs.items()
-                          if len(kwargs[key]) == 1])
-                + '.csv')
+    out_file = (
+        out_root
+        + "-".join(
+            [
+                "{}={}".format(key, value[0])
+                for key, value in kwargs.items()
+                if len(kwargs[key]) == 1
+            ]
+        )
+        + ".csv"
+    )
 
     # build list of parameters
     parameters = []
     for param_idx in range(len(param_dicts)):
         params = param_dicts[param_idx]
-        params['param_idx'] = param_idx
+        params["param_idx"] = param_idx
         for trial_idx in range(trials_per_setting):
             t_params = dict(params)  # copy so that can vary trial number
-            t_params['trial_idx'] = trial_idx
+            t_params["trial_idx"] = trial_idx
             parameters.append(t_params)
         # parameters = [params for _ in range(trials_per_setting)]
     # send work to pool, wrapped in a progress bar
     procs = Pool(num_procs)
-    data = pd.concat(list(tqdm.tqdm(
-        procs.imap(run_trial_from_kw, parameters),
-        total=len(parameters))), ignore_index=True)
+    data = pd.concat(
+        list(
+            tqdm.tqdm(procs.imap(run_trial_from_kw, parameters), total=len(parameters))
+        ),
+        ignore_index=True,
+    )
     # write output
     data.to_csv(out_file)
 
 
-def experiment_one(out_dir='/tmp'):
+def parse_config(exp_config: str) -> Dict:
+    with open(f"exps/{exp_config}.yml", "r") as exp_file:
+        config = yaml.load(exp_file, Loader=yaml.CLoader)
+    for param in ["repression_rate", "scaling_parameter"]:
+        if config[param]:
+            config[param] = np.linspace(**config[param])
+    return config
+
+
+def experiment_one(out_dir="/tmp"):
     """Runs experiment one, where no parameters vary.
 
     Args:
         out_file: file to write data to
     """
-    out_root = '{}/exp1-'.format(out_dir)
-    run_experiment(out_root,
-                   trials_per_setting=2, num_procs=1,
-                   graph_type=[GraphType.SCALEFREE],
-                   repression_type=[RepressionType.NODE_REMOVAL],
-                   threshold_type=[ThresholdType.NORMAL],
-                   num_nodes=[1000],
-                   repression_rate=[0.2, 0.4],
-                   scaling_parameter=[2.3])
+    out_root = "{}/exp1-".format(out_dir)
+    run_experiment(
+        out_root,
+        trials_per_setting=2,
+        num_procs=1,
+        graph_type=[GraphType.SCALEFREE],
+        repression_type=[RepressionType.NODE_REMOVAL],
+        threshold_type=[ThresholdType.NORMAL],
+        num_nodes=[1000],
+        repression_rate=[0.2, 0.4],
+        scaling_parameter=[2.3],
+    )
 
 
 # TODO: UPDATE OTHER EXPERIMENTS TO THIS NEW SIGNATURE
@@ -533,15 +584,19 @@ def experiment_one_a1(out_dir, num_procs, trials_per_setting):
     Args:
         out_file: file to write data to
     """
-    out_root = '{}/exp1a-1-'.format(out_dir)
-    run_experiment(out_root, num_procs, trials_per_setting,
-                   graph_type=[GraphType.SCALEFREE],
-                   repression_type=[RepressionType.NODE_REMOVAL],
-                   threshold_type=[ThresholdType.UNIFORM],
-                   num_nodes=[1000],
-                   # repression_rate=np.linspace(0, 1, num=(1+1/0.025)),
-                   repression_rate=np.linspace(0, 0.15, num=101),
-                   scaling_parameter=np.linspace(2, 2.25, num=11))
+    out_root = "{}/exp1a-1-".format(out_dir)
+    run_experiment(
+        out_root,
+        num_procs,
+        trials_per_setting,
+        graph_type=[GraphType.SCALEFREE],
+        repression_type=[RepressionType.NODE_REMOVAL],
+        threshold_type=[ThresholdType.UNIFORM],
+        num_nodes=[1000],
+        # repression_rate=np.linspace(0, 1, num=(1+1/0.025)),
+        repression_rate=np.linspace(0, 0.15, num=101),
+        scaling_parameter=np.linspace(2, 2.25, num=11),
+    )
 
 
 def experiment_one_a2(out_dir, num_procs, trials_per_setting):
@@ -551,15 +606,19 @@ def experiment_one_a2(out_dir, num_procs, trials_per_setting):
     Args:
         out_file: file to write data to
     """
-    out_root = '{}/exp1a-2-'.format(out_dir)
-    run_experiment(out_root, num_procs, trials_per_setting,
-                   graph_type=[GraphType.SCALEFREE],
-                   repression_type=[RepressionType.NODE_REMOVAL],
-                   threshold_type=[ThresholdType.UNIFORM],
-                   num_nodes=[1000],
-                   # repression_rate=np.linspace(0, 1, num=(1+1/0.025)),
-                   repression_rate=np.linspace(0, 0.15, num=101),
-                   scaling_parameter=np.linspace(2.25+0.025, 2.5, num=10))
+    out_root = "{}/exp1a-2-".format(out_dir)
+    run_experiment(
+        out_root,
+        num_procs,
+        trials_per_setting,
+        graph_type=[GraphType.SCALEFREE],
+        repression_type=[RepressionType.NODE_REMOVAL],
+        threshold_type=[ThresholdType.UNIFORM],
+        num_nodes=[1000],
+        # repression_rate=np.linspace(0, 1, num=(1+1/0.025)),
+        repression_rate=np.linspace(0, 0.15, num=101),
+        scaling_parameter=np.linspace(2.25 + 0.025, 2.5, num=10),
+    )
 
 
 def experiment_one_a3(out_dir, num_procs, trials_per_setting):
@@ -569,15 +628,19 @@ def experiment_one_a3(out_dir, num_procs, trials_per_setting):
     Args:
         out_file: file to write data to
     """
-    out_root = '{}/exp1a-3-'.format(out_dir)
-    run_experiment(out_root, num_procs, trials_per_setting,
-                   graph_type=[GraphType.SCALEFREE],
-                   repression_type=[RepressionType.NODE_REMOVAL],
-                   threshold_type=[ThresholdType.UNIFORM],
-                   num_nodes=[1000],
-                   # repression_rate=np.linspace(0, 1, num=(1+1/0.025)),
-                   repression_rate=np.linspace(0, 0.15, num=101),
-                   scaling_parameter=np.linspace(2.5+0.025, 2.75, num=10))
+    out_root = "{}/exp1a-3-".format(out_dir)
+    run_experiment(
+        out_root,
+        num_procs,
+        trials_per_setting,
+        graph_type=[GraphType.SCALEFREE],
+        repression_type=[RepressionType.NODE_REMOVAL],
+        threshold_type=[ThresholdType.UNIFORM],
+        num_nodes=[1000],
+        # repression_rate=np.linspace(0, 1, num=(1+1/0.025)),
+        repression_rate=np.linspace(0, 0.15, num=101),
+        scaling_parameter=np.linspace(2.5 + 0.025, 2.75, num=10),
+    )
 
 
 def experiment_one_a4(out_dir, num_procs, trials_per_setting):
@@ -587,15 +650,19 @@ def experiment_one_a4(out_dir, num_procs, trials_per_setting):
     Args:
         out_file: file to write data to
     """
-    out_root = '{}/exp1a-4-'.format(out_dir)
-    run_experiment(out_root, num_procs, trials_per_setting,
-                   graph_type=[GraphType.SCALEFREE],
-                   repression_type=[RepressionType.NODE_REMOVAL],
-                   threshold_type=[ThresholdType.UNIFORM],
-                   num_nodes=[1000],
-                   # repression_rate=np.linspace(0, 1, num=(1+1/0.025)),
-                   repression_rate=np.linspace(0, 0.15, num=101),
-                   scaling_parameter=np.linspace(2.75+0.025, 3, num=10))
+    out_root = "{}/exp1a-4-".format(out_dir)
+    run_experiment(
+        out_root,
+        num_procs,
+        trials_per_setting,
+        graph_type=[GraphType.SCALEFREE],
+        repression_type=[RepressionType.NODE_REMOVAL],
+        threshold_type=[ThresholdType.UNIFORM],
+        num_nodes=[1000],
+        # repression_rate=np.linspace(0, 1, num=(1+1/0.025)),
+        repression_rate=np.linspace(0, 0.15, num=101),
+        scaling_parameter=np.linspace(2.75 + 0.025, 3, num=10),
+    )
 
 
 def experiment_two_a1(out_dir, num_procs, trials_per_setting):
@@ -605,19 +672,23 @@ def experiment_two_a1(out_dir, num_procs, trials_per_setting):
     Args:
         out_file: file to write data to
     """
-    out_root = '{}/exp2a-1-'.format(out_dir)
+    out_root = "{}/exp2a-1-".format(out_dir)
     p_values = np.logspace(-3, 0, num=20)  # from 10^-3 to 1, in 20 log steps
     p_values = p_values.tolist()
     p_values.insert(0, 0)  # add p = 0
-    run_experiment(out_root, num_procs, trials_per_setting,
-                   graph_type=[GraphType.WATTS_STROGATZ],
-                   repression_type=[RepressionType.NODE_REMOVAL],
-                   threshold_type=[ThresholdType.UNIFORM],
-                   num_nodes=[1000],
-                   # repression_rate=np.linspace(0, 1, num=(1+1/0.05)),
-                   repression_rate=np.linspace(0, 0.075, num=51),
-                   p=p_values,
-                   k=[15])
+    run_experiment(
+        out_root,
+        num_procs,
+        trials_per_setting,
+        graph_type=[GraphType.WATTS_STROGATZ],
+        repression_type=[RepressionType.NODE_REMOVAL],
+        threshold_type=[ThresholdType.UNIFORM],
+        num_nodes=[1000],
+        # repression_rate=np.linspace(0, 1, num=(1+1/0.05)),
+        repression_rate=np.linspace(0, 0.075, num=51),
+        p=p_values,
+        k=[15],
+    )
 
 
 def experiment_two_a2(out_dir, num_procs, trials_per_setting):
@@ -627,19 +698,23 @@ def experiment_two_a2(out_dir, num_procs, trials_per_setting):
     Args:
         out_file: file to write data to
     """
-    out_root = '{}/exp2a-2-'.format(out_dir)
+    out_root = "{}/exp2a-2-".format(out_dir)
     p_values = np.logspace(-3, 0, num=20)  # from 10^-3 to 1, in 20 log steps
     p_values = p_values.tolist()
     p_values.insert(0, 0)  # add p = 0
-    run_experiment(out_root, num_procs, trials_per_setting,
-                   graph_type=[GraphType.WATTS_STROGATZ],
-                   repression_type=[RepressionType.NODE_REMOVAL],
-                   threshold_type=[ThresholdType.UNIFORM],
-                   num_nodes=[1000],
-                   # repression_rate=np.linspace(0, 1, num=(1+1/0.05)),
-                   repression_rate=np.linspace(0.0765, 0.15, num=50),
-                   p=p_values,
-                   k=[15])
+    run_experiment(
+        out_root,
+        num_procs,
+        trials_per_setting,
+        graph_type=[GraphType.WATTS_STROGATZ],
+        repression_type=[RepressionType.NODE_REMOVAL],
+        threshold_type=[ThresholdType.UNIFORM],
+        num_nodes=[1000],
+        # repression_rate=np.linspace(0, 1, num=(1+1/0.05)),
+        repression_rate=np.linspace(0.0765, 0.15, num=50),
+        p=p_values,
+        k=[15],
+    )
 
 
 def experiment_three_a1(out_dir, num_procs, trials_per_setting):
@@ -649,17 +724,21 @@ def experiment_three_a1(out_dir, num_procs, trials_per_setting):
     Args:
         out_file: file to write data to
     """
-    out_root = '{}/exp3a-1-'.format(out_dir)
-    p_values = np.linspace(0, .9, 21)
-    run_experiment(out_root, num_procs, trials_per_setting,
-                   graph_type=[GraphType.POWERLAW_CLUSTER],
-                   repression_type=[RepressionType.NODE_REMOVAL],
-                   threshold_type=[ThresholdType.UNIFORM],
-                   num_nodes=[1000],
-                   #repression_rate=np.linspace(0, 1, num=(1+1/0.05)),
-                   repression_rate=np.linspace(0, 0.075, num=51),
-                   p=p_values,
-                   m=[3])
+    out_root = "{}/exp3a-1-".format(out_dir)
+    p_values = np.linspace(0, 0.9, 21)
+    run_experiment(
+        out_root,
+        num_procs,
+        trials_per_setting,
+        graph_type=[GraphType.POWERLAW_CLUSTER],
+        repression_type=[RepressionType.NODE_REMOVAL],
+        threshold_type=[ThresholdType.UNIFORM],
+        num_nodes=[1000],
+        # repression_rate=np.linspace(0, 1, num=(1+1/0.05)),
+        repression_rate=np.linspace(0, 0.075, num=51),
+        p=p_values,
+        m=[3],
+    )
 
 
 def experiment_three_a2(out_dir, num_procs, trials_per_setting):
@@ -669,75 +748,85 @@ def experiment_three_a2(out_dir, num_procs, trials_per_setting):
     Args:
         out_file: file to write data to
     """
-    out_root = '{}/exp3a-2-'.format(out_dir)
-    p_values = np.linspace(0, .9, 21)
-    run_experiment(out_root, num_procs, trials_per_setting,
-                   graph_type=[GraphType.POWERLAW_CLUSTER],
-                   repression_type=[RepressionType.NODE_REMOVAL],
-                   threshold_type=[ThresholdType.UNIFORM],
-                   num_nodes=[1000],
-                   #repression_rate=np.linspace(0, 1, num=(1+1/0.05)),
-                   repression_rate=np.linspace(0.0765, 0.15, num=50),
-                   p=p_values,
-                   m=[3])
+    out_root = "{}/exp3a-2-".format(out_dir)
+    p_values = np.linspace(0, 0.9, 21)
+    run_experiment(
+        out_root,
+        num_procs,
+        trials_per_setting,
+        graph_type=[GraphType.POWERLAW_CLUSTER],
+        repression_type=[RepressionType.NODE_REMOVAL],
+        threshold_type=[ThresholdType.UNIFORM],
+        num_nodes=[1000],
+        # repression_rate=np.linspace(0, 1, num=(1+1/0.05)),
+        repression_rate=np.linspace(0.0765, 0.15, num=50),
+        p=p_values,
+        m=[3],
+    )
 
 
-def experiment_two(out_dir='/tmp'):
+def experiment_two(out_dir="/tmp"):
     """Runs experiment two, where scale parameter varies.
 
     Args:
         out_file: file to write data to
     """
-    out_root = '{}/exp2-'.format(out_dir)
+    out_root = "{}/exp2-".format(out_dir)
     scale_params = np.linspace(2, 3, num=101)
-    run_experiment(out_root,
-                   # trials_per_setting=2, num_procs=1,
-                   graph_type=[GraphType.SCALEFREE],
-                   repression_type=[RepressionType.NODE_REMOVAL],
-                   threshold_type=[ThresholdType.NORMAL],
-                   num_nodes=[1000],
-                   scaling_parameter=scale_params)
+    run_experiment(
+        out_root,
+        # trials_per_setting=2, num_procs=1,
+        graph_type=[GraphType.SCALEFREE],
+        repression_type=[RepressionType.NODE_REMOVAL],
+        threshold_type=[ThresholdType.NORMAL],
+        num_nodes=[1000],
+        scaling_parameter=scale_params,
+    )
 
 
-def experiment_three(out_dir='/tmp'):
+def experiment_three(out_dir="/tmp"):
     """Runs experiment three, where scale parameter and repression rate vary.
 
     Args:
         out_file: file to write data to
     """
-    out_root = '{}/exp3-'.format(out_dir)
+    out_root = "{}/exp3-".format(out_dir)
     scale_params = np.linspace(2, 3, num=41)
     repression_rates = np.linspace(0, 1, num=41)
-    run_experiment(out_root,
-                   # trials_per_setting=2, num_procs=1,
-                   graph_type=[GraphType.SCALEFREE],
-                   repression_type=[RepressionType.EDGE_REMOVAL],
-                   repression_rate=repression_rates,
-                   threshold_type=[ThresholdType.NORMAL],
-                   num_nodes=[1000],
-                   scaling_parameter=scale_params)
+    run_experiment(
+        out_root,
+        # trials_per_setting=2, num_procs=1,
+        graph_type=[GraphType.SCALEFREE],
+        repression_type=[RepressionType.EDGE_REMOVAL],
+        repression_rate=repression_rates,
+        threshold_type=[ThresholdType.NORMAL],
+        num_nodes=[1000],
+        scaling_parameter=scale_params,
+    )
 
 
-def experiment_four(out_dir='/tmp'):
+def experiment_four(out_dir="/tmp"):
     """Runs experiment four, where number of nodes varies.
 
     Args:
         out_file: file to write data to
     """
-    out_root = '{}/exp4-'.format(out_dir)
+    out_root = "{}/exp4-".format(out_dir)
     size_params = np.linspace(1000, 10000, num=41, dtype=int)
     repression_rates = np.linspace(0, 1, num=41)
-    run_experiment(out_root,
-                   # trials_per_setting=2, num_procs=1,
-                   graph_type=[GraphType.SCALEFREE],
-                   repression_type=[RepressionType.EDGE_REMOVAL],
-                   repression_rate=repression_rates,
-                   threshold_type=[ThresholdType.NORMAL],
-                   num_nodes=size_params,
-                   scaling_parameter=[2.3])
+    run_experiment(
+        out_root,
+        # trials_per_setting=2, num_procs=1,
+        graph_type=[GraphType.SCALEFREE],
+        repression_type=[RepressionType.EDGE_REMOVAL],
+        repression_rate=repression_rates,
+        threshold_type=[ThresholdType.NORMAL],
+        num_nodes=size_params,
+        scaling_parameter=[2.3],
+    )
 
 
-def experiment_five(out_dir='/tmp'):
+def experiment_five(out_dir="/tmp"):
     """From Newman 2003, "The structure and function of complex networks",
     social networks may have a clustering coefficient of .16;
     this is for e-mail messages (e-mail address books are very similar),
@@ -747,131 +836,152 @@ def experiment_five(out_dir='/tmp'):
     From the formula on page 2 of their article, m_t = (m-1)*p.
     So we are using m=3, .6=2*p, p=.3.
     """
-    out_root = '{}/exp5-'.format(out_dir)
-    run_experiment(out_root,
-                   # trials_per_setting=2, num_procs=1,
-                   graph_type=[GraphType.POWERLAW_CLUSTER],
-                   repression_type=[RepressionType.NODE_REMOVAL],
-                   threshold_type=[ThresholdType.NORMAL],
-                   num_nodes=[3000],
-                   p=[0.3],
-                   m=[3])
+    out_root = "{}/exp5-".format(out_dir)
+    run_experiment(
+        out_root,
+        # trials_per_setting=2, num_procs=1,
+        graph_type=[GraphType.POWERLAW_CLUSTER],
+        repression_type=[RepressionType.NODE_REMOVAL],
+        threshold_type=[ThresholdType.NORMAL],
+        num_nodes=[3000],
+        p=[0.3],
+        m=[3],
+    )
 
 
-def experiment_six(out_dir='/tmp'):
+def experiment_six(out_dir="/tmp"):
 
-    out_root = '{}/exp6-'.format(out_dir)
+    out_root = "{}/exp6-".format(out_dir)
     p_values = np.logspace(-3, 0, num=20)  # from 10^-3 to 1, in 20 log steps
     p_values = p_values.tolist()
     p_values.insert(0, 0)  # add p = 0
-    run_experiment(out_root,
-                   # trials_per_setting=2, num_procs=1,
-                   graph_type=[GraphType.WATTS_STROGATZ],
-                   repression_type=[RepressionType.NODE_REMOVAL],
-                   threshold_type=[ThresholdType.NORMAL],
-                   num_nodes=[1000],
-                   k=[15],
-                   p=p_values)
+    run_experiment(
+        out_root,
+        # trials_per_setting=2, num_procs=1,
+        graph_type=[GraphType.WATTS_STROGATZ],
+        repression_type=[RepressionType.NODE_REMOVAL],
+        threshold_type=[ThresholdType.NORMAL],
+        num_nodes=[1000],
+        k=[15],
+        p=p_values,
+    )
 
 
 # Scale-free, node removal, uniform threshold
-def experiment_seven(out_dir='/tmp'):
-    out_root = '{}/exp7-'.format(out_dir)
+def experiment_seven(out_dir="/tmp"):
+    out_root = "{}/exp7-".format(out_dir)
     scale_params = np.linspace(2, 3, num=41)
-    run_experiment(out_root,
-                   trials_per_setting=2, num_procs=1,
-                   graph_type=[GraphType.SCALEFREE],
-                   repression_type=[RepressionType.NODE_REMOVAL],
-                   repression_rate=[0.2],
-                   threshold_type=[ThresholdType.UNIFORM],
-                   num_nodes=[1000],
-                   scaling_parameter=scale_params)
+    run_experiment(
+        out_root,
+        trials_per_setting=2,
+        num_procs=1,
+        graph_type=[GraphType.SCALEFREE],
+        repression_type=[RepressionType.NODE_REMOVAL],
+        repression_rate=[0.2],
+        threshold_type=[ThresholdType.UNIFORM],
+        num_nodes=[1000],
+        scaling_parameter=scale_params,
+    )
 
 
 # Scale-free, node removal, normal threshold
-def experiment_eight(out_dir='/tmp'):
-    out_root = '{}/exp8-'.format(out_dir)
+def experiment_eight(out_dir="/tmp"):
+    out_root = "{}/exp8-".format(out_dir)
     scale_params = np.linspace(2, 3, num=41)
-    run_experiment(out_root,
-                   # trials_per_setting=2, num_procs=1,
-                   graph_type=[GraphType.SCALEFREE],
-                   repression_type=[RepressionType.NODE_REMOVAL],
-                   threshold_type=[ThresholdType.NORMAL],
-                   num_nodes=[1000],
-                   scaling_parameter=scale_params)
+    run_experiment(
+        out_root,
+        # trials_per_setting=2, num_procs=1,
+        graph_type=[GraphType.SCALEFREE],
+        repression_type=[RepressionType.NODE_REMOVAL],
+        threshold_type=[ThresholdType.NORMAL],
+        num_nodes=[1000],
+        scaling_parameter=scale_params,
+    )
 
 
 # Powerlaw cluster, node removal, uniform threshold
-def experiment_nine(out_dir='/tmp'):
-    out_root = '{}/exp9-'.format(out_dir)
-    p_values = np.linspace(0, .9, 41)
-    run_experiment(out_root,
-                   trials_per_setting=2, num_procs=1,
-                   graph_type=[GraphType.POWERLAW_CLUSTER],
-                   repression_type=[RepressionType.NODE_REMOVAL],
-                   threshold_type=[ThresholdType.UNIFORM],
-                   num_nodes=[3000],
-                   p=p_values,
-                   m=[3])
+def experiment_nine(out_dir="/tmp"):
+    out_root = "{}/exp9-".format(out_dir)
+    p_values = np.linspace(0, 0.9, 41)
+    run_experiment(
+        out_root,
+        trials_per_setting=2,
+        num_procs=1,
+        graph_type=[GraphType.POWERLAW_CLUSTER],
+        repression_type=[RepressionType.NODE_REMOVAL],
+        threshold_type=[ThresholdType.UNIFORM],
+        num_nodes=[3000],
+        p=p_values,
+        m=[3],
+    )
 
 
 # Powerlaw cluster, edge removal, uniform threshold
-def experiment_ten(out_dir='/tmp'):
-    out_root = '{}/exp10-'.format(out_dir)
-    p_values = np.linspace(0, .9, 41)
+def experiment_ten(out_dir="/tmp"):
+    out_root = "{}/exp10-".format(out_dir)
+    p_values = np.linspace(0, 0.9, 41)
     repression_rates = np.linspace(0, 1, num=41)
-    run_experiment(out_root,
-                   graph_type=[GraphType.POWERLAW_CLUSTER],
-                   repression_type=[RepressionType.EDGE_REMOVAL],
-                   repression_rate=repression_rates,
-                   threshold_type=[ThresholdType.UNIFORM],
-                   num_nodes=[3000],
-                   p=p_values,
-                   m=[3])
+    run_experiment(
+        out_root,
+        graph_type=[GraphType.POWERLAW_CLUSTER],
+        repression_type=[RepressionType.EDGE_REMOVAL],
+        repression_rate=repression_rates,
+        threshold_type=[ThresholdType.UNIFORM],
+        num_nodes=[3000],
+        p=p_values,
+        m=[3],
+    )
 
 
 # Powerlaw cluster, node removal, normal threshold
-def experiment_eleven(out_dir='/tmp'):
-    out_root = '{}/exp11-'.format(out_dir)
-    p_values = np.linspace(0, .9, 41)
-    run_experiment(out_root,
-                   graph_type=[GraphType.POWERLAW_CLUSTER],
-                   repression_type=[RepressionType.NODE_REMOVAL],
-                   threshold_type=[ThresholdType.NORMAL],
-                   num_nodes=[3000],
-                   p=p_values,
-                   m=[3])
+def experiment_eleven(out_dir="/tmp"):
+    out_root = "{}/exp11-".format(out_dir)
+    p_values = np.linspace(0, 0.9, 41)
+    run_experiment(
+        out_root,
+        graph_type=[GraphType.POWERLAW_CLUSTER],
+        repression_type=[RepressionType.NODE_REMOVAL],
+        threshold_type=[ThresholdType.NORMAL],
+        num_nodes=[3000],
+        p=p_values,
+        m=[3],
+    )
 
 
 # Powerlaw cluster, edge removal, normal threshold
-def experiment_twelve(out_dir='/tmp'):
-    out_root = '{}/exp12-'.format(out_dir)
-    p_values = np.linspace(0, .9, 41)
+def experiment_twelve(out_dir="/tmp"):
+    out_root = "{}/exp12-".format(out_dir)
+    p_values = np.linspace(0, 0.9, 41)
     repression_rates = np.linspace(0, 1, num=41)
-    run_experiment(out_root,
-                   # trials_per_setting=2, num_procs=1,
-                   graph_type=[GraphType.POWERLAW_CLUSTER],
-                   repression_type=[RepressionType.EDGE_REMOVAL],
-                   repression_rate=repression_rates,
-                   threshold_type=[ThresholdType.NORMAL],
-                   num_nodes=[3000],
-                   p=p_values,
-                   m=[3])
+    run_experiment(
+        out_root,
+        # trials_per_setting=2, num_procs=1,
+        graph_type=[GraphType.POWERLAW_CLUSTER],
+        repression_type=[RepressionType.EDGE_REMOVAL],
+        repression_rate=repression_rates,
+        threshold_type=[ThresholdType.NORMAL],
+        num_nodes=[3000],
+        p=p_values,
+        m=[3],
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     # TODO: make all exp options command line?
     parser = argparse.ArgumentParser()
-    parser.add_argument('--exp', help='which experiment to run', type=str)
-    parser.add_argument('--num_procs', help='how many processes to use',
-                        type=int, default=1)
-    parser.add_argument('--trials_per_setting',
-                        help='how many trials per param setting',
-                        type=int, default=2)
-    parser.add_argument('--out_dir', help='path to output', type=str,
-                        default='/tmp')
+    parser.add_argument("--exp", help="which experiment to run", type=str)
+    parser.add_argument(
+        "--num_procs", help="how many processes to use", type=int, default=1
+    )
+    parser.add_argument("--out_dir", help="path to output", type=str, default="/tmp")
     args = parser.parse_args()
 
-    the_globals = globals().copy()
-    the_globals[args.exp](args.out_dir, args.num_procs, args.trials_per_setting)
+    config = parse_config(args.exp)
+    print(config)
+
+    out_root = f"{args.out_dir}/{args.exp}-"
+    run_experiment(out_root, num_procs=args.num_procs, **config)
+
+    # the_globals = globals().copy()
+    # the_globals[args.exp](args.out_dir, args.num_procs, args.trials_per_setting)

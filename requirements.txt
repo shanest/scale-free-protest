@@ -4,3 +4,4 @@ pandas==1.0.5
 tqdm==4.48
 scipy>=1.5
 python-louvain
+pyyaml

@@ -1,0 +1,17 @@
+graph_type: 
+  - scale_free_graph
+repression_type:
+  - node_removal
+threshold_type:
+  - uniform
+num_nodes:
+  - 100
+repression_rate:
+  start: 0
+  stop: 0.15
+  num: 101
+scaling_parameter:
+  start: 2
+  stop: 2.25
+  num: 11
+trials_per_setting: 2
