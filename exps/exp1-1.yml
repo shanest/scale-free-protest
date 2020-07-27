@@ -5,7 +5,7 @@ repression_type:
 threshold_type:
   - uniform
 num_nodes:
-  - 100
+  - 1000
 repression_rate:
   scale: linspace
   args:
@@ -18,4 +18,4 @@ scaling_parameter:
     start: 2
     stop: 2.25
     num: 11
-trials_per_setting: 1
+trials_per_setting: 1000
