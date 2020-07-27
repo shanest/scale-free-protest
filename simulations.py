@@ -13,7 +13,12 @@ import networkx as nx
 import community  # louvain
 import pandas as pd
 import tqdm
+
 import yaml
+try:
+    from yaml import CLoader as Loader, CDumper as Dumper
+except ImportError:
+    from yaml import Loader, Dumper
 
 # TODO: document the module
 
@@ -556,7 +561,7 @@ def run_experiment(out_root, num_procs, trials_per_setting, **kwargs):
 
 def parse_config(exp_config: str) -> Dict:
     with open(f"exps/{exp_config}.yml", "r") as exp_file:
-        config = yaml.load(exp_file, Loader=yaml.CLoader)
+        config = yaml.load(exp_file, Loader=Loader)
     # parameters
     for param in ["repression_rate", "scaling_parameter", "p"]:
         if param in config:
