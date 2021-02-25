@@ -13,10 +13,10 @@ Setup:
 Basic usage:
 
 ```
-python simulations.py --exp {file}.yml --num_procs 1 --out_dir OUTPUT_DIR
+python simulations.py --exp {config} --num_procs 1 --out_dir OUTPUT_DIR
 ```
 
-The experiments from the paper can be found as specified in YAML files in the `exps` directory.
+The experiments from the paper can be found as specified in YAML files in the `exps` directory.  The argument should be the root of the file (e.g. `exp1-1`).
 
 
 ## Analysis scripts
