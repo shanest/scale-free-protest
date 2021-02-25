@@ -1,7 +1,8 @@
 data
+Icon
 .vscode
 .bak
 .pyc
 .DS_Store
-Icon
-.code-workspace
+*.code-workspace
+data.tar.gz
