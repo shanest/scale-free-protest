@@ -75,4 +75,3 @@ The simulations will output a large amount of raw data about the dynamics of the
 		- Data/MassMobilization_Binghampton/mm_public_120615.csv
 		- Data/MassMobilizationsAutocracyDataset/EventLevel/events.csv
 	- Output:
-		-
